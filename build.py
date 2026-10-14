@@ -1,9 +1,24 @@
-"""Genera index.html a partir de src/: python3 build.py"""
+"""Genera index.html, por-anos.html y en/ a partir de src/: python3 build.py"""
+import json
 import subprocess
 import sys
 from pathlib import Path
 
+import i18n
+
 ROOT = Path(__file__).parent
+EN = json.loads((ROOT / "i18n" / "en.json").read_text())
+
+
+def lang_nav(lang, out):
+    """Selector ES | EN; cada enlace apunta a la misma vista en el otro idioma."""
+    es, en = (out, f"en/{out}") if lang == "es" else (f"../{out}", out)
+    es, en = (p.replace("index.html", "") or "./" for p in (es, en))
+    cur = '<span aria-current="page" lang="{0}">{1}</span>'
+    link = '<a href="{0}" lang="{1}" hreflang="{1}">{2}</a>'
+    items = [cur.format("es", "ES") if lang == "es" else link.format(es, "es", "ES"),
+             cur.format("en", "EN") if lang == "en" else link.format(en, "en", "EN")]
+    return f'<nav class="mode" aria-label="{"Idioma" if lang == "es" else "Language"}">{"".join(items)}</nav>'
 
 
 def build(script, src_html, out):
@@ -27,9 +42,20 @@ def build(script, src_html, out):
     </body>
     </html>
     """
-    (ROOT / out).write_text(doc)
-    print(out, len(doc))
+    en, missing = i18n.translate(doc, EN)
+    en = en.replace('<html lang="es">', '<html lang="en">', 1)
+    for lang, html, path in (("es", doc, ROOT / out), ("en", en, ROOT / "en" / out)):
+        nav = html.index("</nav>", html.index('<nav class="mode"')) + len("</nav>")
+        html = html[:nav] + lang_nav(lang, out) + html[nav:]
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(html)
+        print(path.relative_to(ROOT), len(html))
+    return missing
 
 
-build("zip3.py", "cremallera.html", "index.html")
-build("zip3_anos.py", "cremallera-anos.html", "por-anos.html")
+missing = set(build("zip3.py", "cremallera.html", "index.html"))
+missing |= set(build("zip3_anos.py", "cremallera-anos.html", "por-anos.html"))
+if missing:
+    print(f"\n{len(missing)} textos sin traducción en i18n/en.json (quedan en español en en/):", file=sys.stderr)
+    for m in sorted(missing)[:40]:
+        print("  " + m[:100].replace("\n", "\\n"), file=sys.stderr)

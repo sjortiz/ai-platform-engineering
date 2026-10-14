@@ -22,3 +22,5 @@ El contenido vive en `src/detalle.py` y las fuentes de cada hito en `src/fuentes
 ```bash
 python3 build.py
 ```
+
+La versión en inglés (`en/`) se genera en el mismo paso con la tabla `i18n/en.json`. Si cambias un texto, `build.py` lista los que no tienen traducción y esos quedan en español.
