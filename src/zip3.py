@@ -173,7 +173,8 @@ page = f"""<title>AI Platform Engineering</title>
   .nav button:hover{{border-color:var(--accent)}}
   .nav button:focus-visible,.mdot:focus-visible{{outline:2px solid var(--accent);outline-offset:2px}}
   .nav button:disabled{{opacity:.35;cursor:default}}
-  .pos{{font-family:var(--mono);font-size:.8rem;color:var(--muted);min-width:9em;text-align:center}}
+  .pos{{font-family:var(--mono);font-size:.8rem;color:var(--muted);width:16.5em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+  .score{{width:6.5em}}
   .minibox{{background:var(--panel);border-bottom:1px solid var(--line);padding-block:4px}}
   .mini{{display:block;width:100%;max-width:1240px;max-height:104px;margin:0 auto;height:auto}}
   .mrail{{fill:none;stroke:var(--line-2);stroke-width:2.5;stroke-linecap:round}}
@@ -432,10 +433,10 @@ page = f"""<title>AI Platform Engineering</title>
 <div class="bar">
   <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú</div>
   <div class="nav">
+    <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
     <span class="pos" id="pos"></span>
     <button type="button" id="b-next" aria-label="Siguiente">▶</button>
-    <button type="button" id="b-sup" class="supbtn" hidden></button>
     <span class="score" id="score" aria-live="polite">0 pts</span>
   </div>
 </div>
