@@ -350,7 +350,7 @@ page = f"""<title>AI Platform Engineering</title>
   .stitle .num,.sechead .num{{font-family:var(--display);font-weight:600;color:var(--accent);font-size:1.1rem;white-space:nowrap}}
   .stitle h2{{font-family:var(--display);font-weight:600;font-size:2.3rem;line-height:1.1;margin:0}}
   .stitle .when{{margin-left:auto;font-family:var(--mono);font-size:.85rem;color:var(--muted)}}
-  .sgrid{{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:36px;padding-top:14px}}
+  .sgrid{{display:grid;grid-template-columns:minmax(0,1fr) 255px;gap:32px;padding-top:14px}}
   .smain{{min-width:0}}
   .smain .lead{{font-size:1.12rem;line-height:1.5;margin:0 0 4px;max-width:none}}
   .mcols{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px}}
@@ -370,7 +370,7 @@ page = f"""<title>AI Platform Engineering</title>
   aside.tl{{border-left:1px solid var(--line-2);padding-left:18px}}
   aside.tl .sub:first-child{{margin-top:0}}
   aside.tl .txt{{font-size:.9rem}}
-  aside.tl ol{{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:9px}}
+  aside.tl ol{{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}}
   aside.tl li{{display:grid;gap:1px;position:relative;font-size:.88rem;line-height:1.32}}
   aside.tl li::before{{content:"";position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--accent)}}
   a.src{{font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;padding:0 2px}}

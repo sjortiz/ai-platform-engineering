@@ -97,3 +97,10 @@ FUENTES = {
     "Playwright MCP: un agente maneja el navegador": ["https://github.com/microsoft/playwright-mcp"],
     "Agentes que escriben, corren y reparan pruebas": ["https://playwright.dev/docs/test-agents"],
 }
+
+# Una fuente por hito para los hitos que se separaron en dos líneas.
+from detalle import SPLIT as _SPLIT  # noqa: E402
+
+for _orig, _parts in _SPLIT.items():
+    for (_f, _t), _u in zip(_parts, FUENTES[_orig]):
+        FUENTES[_t] = [_u]

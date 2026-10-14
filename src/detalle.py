@@ -662,3 +662,31 @@ _SECMAS = {
 }
 for _k, (_l, _e, _m) in _SECMAS.items():
     SECX[_k].update(lleva=_l, err=_e, medir=_m)
+
+# Un hito por fuente: los hitos dobles se separan en dos líneas.
+SPLIT = {
+    "GitHub Actions y OpenTelemetry": [(None, "GitHub Actions"), (None, "OpenTelemetry")],
+    "GPT-4 y Claude": [(None, "GPT-4"), (None, "Claude")],
+    "Prototipos generados con v0 y Lovable": [(None, "Prototipos generados con v0"), (None, "Prototipos generados con Lovable")],
+    "LangChain y LlamaIndex": [("oct 2022", "LangChain"), ("nov 2022", "LlamaIndex")],
+    "KAG y Contextual Retrieval": [(None, "KAG"), (None, "Contextual Retrieval")],
+    "Llama 3.2 1B y 3B, Qwen 2.5": [(None, "Llama 3.2 1B y 3B"), (None, "Qwen 2.5")],
+    "Gemma 3 y Qwen3": [(None, "Gemma 3"), (None, "Qwen3")],
+    "Unsloth y Axolotl": [(None, "Unsloth"), (None, "Axolotl")],
+    "Cuantización GPTQ y AWQ": [(None, "Cuantización GPTQ"), (None, "Cuantización AWQ")],
+    "LiteLLM y Cloudflare AI Gateway": [(None, "LiteLLM"), (None, "Cloudflare AI Gateway")],
+}
+
+
+def _split(hitos):
+    out = []
+    for fecha, texto in hitos:
+        for f2, t2 in SPLIT.get(texto, [(None, texto)]):
+            out.append((f2 or fecha, t2))
+    return out
+
+
+for _v in INFO.values():
+    _v["hitos"] = _split(_v["hitos"])
+for _k in SECHITOS:
+    SECHITOS[_k] = _split(SECHITOS[_k])
