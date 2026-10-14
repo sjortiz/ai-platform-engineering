@@ -178,6 +178,11 @@ page = f"""<title>AI Platform Engineering</title>
   .minibox{{background:var(--panel);border-bottom:1px solid var(--line);padding-block:4px}}
   .mini{{display:block;width:100%;max-width:1240px;max-height:104px;margin:0 auto;height:auto}}
   .mrail{{fill:none;stroke:var(--line-2);stroke-width:2.5;stroke-linecap:round}}
+  .mode{{display:inline-flex;margin-left:14px;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;vertical-align:middle}}
+  .bar .mode a,.bar .mode span{{font:600 .78rem var(--sans);padding:4px 10px;text-decoration:none;color:var(--accent);letter-spacing:0;text-transform:none;margin:0}}
+  .bar .mode span{{background:var(--accent);color:var(--bg)}}
+  .mode a:hover{{background:var(--accent-soft)}}
+  .mode a:focus-visible{{outline:2px solid var(--accent);outline-offset:-2px}}
   .mrail.sup{{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 5}}
   .mlab{{font:600 9.5px var(--sans);letter-spacing:.06em;fill:var(--faint)}}
   .msup{{cursor:pointer}}
@@ -431,7 +436,7 @@ page = f"""<title>AI Platform Engineering</title>
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú</div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por pasos</span><a href="por-anos.html">Por años</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>

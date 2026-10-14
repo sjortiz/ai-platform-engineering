@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='7' fill='%230f766e'/%3E%3Crect x='17' y='10' width='4' height='4' fill='white'/%3E%3Crect x='17' y='18' width='4' height='4' fill='white'/%3E%3C/svg%3E">
-<meta name="description" content="AI Platform Engineering — El blocker eres tú. Cada vez que automatizamos un paso, el cuello de botella se mueve.">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>AI Platform Engineering</title>
+    <html lang="es">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='7' fill='%230f766e'/%3E%3Crect x='17' y='10' width='4' height='4' fill='white'/%3E%3Crect x='17' y='18' width='4' height='4' fill='white'/%3E%3C/svg%3E">
+    <meta name="description" content="AI Platform Engineering — El blocker eres tú. Cada vez que automatizamos un paso, el cuello de botella se mueve.">
+    <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+    <title>AI Platform Engineering</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 
@@ -265,6 +265,11 @@
   .minibox{background:var(--panel);border-bottom:1px solid var(--line);padding-block:4px}
   .mini{display:block;width:100%;max-width:1240px;max-height:104px;margin:0 auto;height:auto}
   .mrail{fill:none;stroke:var(--line-2);stroke-width:2.5;stroke-linecap:round}
+  .mode{display:inline-flex;margin-left:14px;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;vertical-align:middle}
+  .bar .mode a,.bar .mode span{font:600 .78rem var(--sans);padding:4px 10px;text-decoration:none;color:var(--accent);letter-spacing:0;text-transform:none;margin:0}
+  .bar .mode span{background:var(--accent);color:var(--bg)}
+  .mode a:hover{background:var(--accent-soft)}
+  .mode a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .mrail.sup{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 5}
   .mlab{font:600 9.5px var(--sans);letter-spacing:.06em;fill:var(--faint)}
   .msup{cursor:pointer}
@@ -517,11 +522,11 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
-</head>
-<body>
-
+    </head>
+    <body>
+    
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú</div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por pasos</span><a href="por-anos.html">Por años</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -971,5 +976,6 @@
 })();
 </script>
 
-</body>
-</html>
+    </body>
+    </html>
+    
