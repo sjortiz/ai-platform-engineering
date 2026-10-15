@@ -249,6 +249,12 @@
   /* Presentación: barra con título y controles, minimapa-índice, y una slide que ocupa el resto de la pantalla. */
   html{font-size:17.6px}
   html,body{height:100%}
+  /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
+  html{scrollbar-gutter:stable}
+  .bar,.minibox{flex:none}
+  /* El botón de apoyo ocupa siempre el mismo ancho (aunque esté oculto): la barra no cambia de alto según la parada. */
+  .bar .supbtn{width:15em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .supbtn[hidden]{display:inline-block !important;visibility:hidden}
   body{font-size:16.5px}
   body{display:flex;flex-direction:column;min-height:100%}
   .bar,.minibox,.stage{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
@@ -687,6 +693,7 @@
     else if (supAvail("a")) { b.hidden = false; b.textContent = D.supa[String(p.i)].t ? "↑ extra: " + D.supa[String(p.i)].t : "↑ questions"; }
     else if (supAvail("s")) { b.hidden = false; b.textContent = "↓ questions"; }
     else b.hidden = true;
+    b.title = b.textContent;
   }
   var SCORE = 0, EATEN = {}, PTS = { avance: 10, seg: 10, glos: 5, hoy: 10, mapa: 10, extra: 20 };
   function pop(xy, n) {

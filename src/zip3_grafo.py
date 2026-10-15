@@ -163,7 +163,8 @@ def pts(xy):
     return " ".join(f"{a:.1f},{b:.1f}" for a, b in xy)
 
 
-# Figuras del tablero: cubo para los pasos, rubí para la seguridad y estrella para las preguntas.
+# Figuras del tablero: cubo para los pasos, bandera (como en un CTF) para la seguridad y estrella
+# para las preguntas.
 def cube(x, y, s=20):
     w, top, ul, ur, ll, lr, bot = s * .87, (x, y - s), (x - s * .87, y - s / 2), (x + s * .87, y - s / 2), (x - s * .87, y + s / 2), (x + s * .87, y + s / 2), (x, y + s)
     c = (x, y)
@@ -172,11 +173,13 @@ def cube(x, y, s=20):
             f'<polygon class="sh" points="{pts((ul, c, bot, ll))}" opacity=".08"/><polygon class="sh" points="{pts((c, ur, lr, bot))}" opacity=".2"/></g>')
 
 
-def ruby(x, y, s=14):
-    gl, gr, cl, cr, b = (x - s, y - s * .25), (x + s, y - s * .25), (x - s * .5, y - s * .75), (x + s * .5, y - s * .75), (x, y + s * .85)
-    return (f'<g class="blk ruby"><polygon points="{pts((cl, cr, gr, b, gl))}"/>'
-            f'<path class="facet" d="M{gl[0]:.1f},{gl[1]:.1f} H{gr[0]:.1f} M{x - s * .3:.1f},{gl[1]:.1f} L{x:.1f},{b[1]:.1f} L{x + s * .3:.1f},{gl[1]:.1f} '
-            f'M{cl[0]:.1f},{cl[1]:.1f} L{x - s * .3:.1f},{gl[1]:.1f} M{cr[0]:.1f},{cr[1]:.1f} L{x + s * .3:.1f},{gl[1]:.1f}"/></g>')
+def flag(x, y):
+    """Banderita de CTF: asta con base y un paño ondeando."""
+    px, top, bot = x - 8, y - 15, y + 14
+    cloth = (f"M{px},{top + 1} C{px + 6},{top - 3} {px + 12},{top + 5} {px + 19},{top + 1} "
+             f"L{px + 19},{top + 13} C{px + 12},{top + 17} {px + 6},{top + 9} {px},{top + 13} Z")
+    return (f'<g class="blk flag"><path class="cloth" d="{cloth}"/>'
+            f'<path class="pole" d="M{px},{top - 1} V{bot}"/><path class="base" d="M{px - 5},{bot} H{px + 5}"/></g>')
 
 
 def star(x, y, r, k=0):
@@ -185,10 +188,26 @@ def star(x, y, r, k=0):
     return f'<polygon class="sq" points="{pts(xy)}" style="animation-delay:-{(k * 0.37) % 3:.2f}s"/>'
 
 
-mini = [f'<defs><pattern id="tablero" width="{2 * G}" height="{2 * G}" patternUnits="userSpaceOnUse">'
-        f'<rect class="tb1" width="{2 * G}" height="{2 * G}"/><rect class="tb2" width="{G}" height="{G}"/>'
-        f'<rect class="tb2" x="{G}" y="{G}" width="{G}" height="{G}"/></pattern></defs>'
-        f'<rect class="tablero" width="{MW}" height="{MH}" rx="8" fill="url(#tablero)"/>']
+# Fondo espacial: un cielo con nebulosas y estrellas que ocupa todo el ancho de la franja, detrás del
+# tablero (decorativo, con su propia semilla para no mover el tablero). El tablero solo pone la cuadrícula.
+SKY = random.Random(5)
+SW, SH = 3000, 260
+NEBS = [(.06, .3, "#7c3aed", .4), (.2, .8, "#0ea5e9", .28), (.36, .25, "#db2777", .2), (.5, .6, "#7c3aed", .42),
+        (.64, .2, "#0ea5e9", .26), (.78, .75, "#db2777", .22), (.94, .35, "#6366f1", .38)]
+SKY_SVG = (f'<svg class="skybg" viewBox="0 0 {SW} {SH}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>'
+           + "".join(f'<radialGradient id="neb{k}"><stop offset="0" stop-color="{c}" stop-opacity="{o}"/><stop offset="1" stop-color="{c}" stop-opacity="0"/></radialGradient>'
+                     for k, (_, _, c, o) in enumerate(NEBS))
+           + "</defs>"
+           + "".join(f'<ellipse cx="{SW * x:.0f}" cy="{SH * y:.0f}" rx="{SKY.uniform(300, 420):.0f}" ry="{SKY.uniform(110, 150):.0f}" fill="url(#neb{k})"/>'
+                     for k, (x, y, _, _) in enumerate(NEBS))
+           + "".join(f'<circle class="bgs{" tw" if SKY.random() < .25 else ""}" cx="{SKY.uniform(4, SW - 4):.0f}" cy="{SKY.uniform(4, SH - 4):.0f}" '
+                     f'r="{SKY.choice((.8, 1, 1.3, 1.7)):.1f}" opacity="{SKY.uniform(.25, .8):.2f}" style="animation-delay:-{SKY.uniform(0, 4):.1f}s"/>'
+                     for _ in range(380))
+           + "</svg>")
+mini = [f'<defs><pattern id="tablero" width="{G}" height="{G}" patternUnits="userSpaceOnUse">'
+        f'<path class="tbg" d="M{G},0 V{G} H0"/></pattern>'
+        f'</defs><rect width="{MW}" height="{MH}" rx="8" fill="url(#tablero)" aria-hidden="true"/>'
+        f'<rect class="tablero" width="{MW}" height="{MH}" rx="8" fill="none"/>']
 for i in SUPA:
     x, y = NODES[f"xa{i}"]["xy"]
     big = " big" if SUPA[i].get("t") else ""
@@ -220,7 +239,7 @@ for idx, p in enumerate(POS):
                     f'{cube(x, y)}<text class="mnum" x="{x}" y="{y - 5}" text-anchor="middle">{p["i"]}</text></g>')
     else:
         mini.append(f'<g class="mdot seg" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
-                    f'<rect class="hit" x="{x - 16}" y="{y - 16}" width="32" height="32"/>{ruby(x, y)}</g>')
+                    f'<rect class="hit" x="{x - 16}" y="{y - 16}" width="32" height="32"/>{flag(x, y)}</g>')
 
 mini.append('<g id="msnake"></g><g id="mkeys" aria-hidden="true"></g>')
 MINI_SVG = f'<svg class="mini" viewBox="0 0 {MW} {MH}" role="navigation" aria-label="Índice de la charla">{"".join(mini)}</svg>'
@@ -293,6 +312,12 @@ page = f"""<title>AI Platform Engineering</title>
   /* Presentación: barra con título y controles, minimapa-índice, y una slide que ocupa el resto de la pantalla. */
   html{{font-size:17.6px}}
   html,body{{height:100%}}
+  /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
+  html{{scrollbar-gutter:stable}}
+  .bar,.minibox{{flex:none}}
+  /* El botón de apoyo ocupa siempre el mismo ancho (aunque esté oculto): la barra no cambia de alto según la parada. */
+  .bar .supbtn{{width:15em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .bar .supbtn[hidden]{{display:inline-block !important;visibility:hidden}}
   body{{font-size:16.5px}}
   body{{display:flex;flex-direction:column;min-height:100%}}
   .bar,.minibox,.stage{{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
@@ -572,21 +597,42 @@ page = f"""<title>AI Platform Engineering</title>
     .cols{{grid-template-columns:minmax(0,1fr)}}
   }}
   .mini{{max-height:185px}}
-  .tablero{{stroke:var(--line-2)}} .tb1{{fill:var(--bg)}} .tb2{{fill:var(--panel-2);opacity:.55}}
+  .minibox{{position:relative;overflow:hidden;background:#0b1026;border-bottom-color:#0b1026}}
+  .skybg{{position:absolute;inset:0;width:100%;height:100%}}
+  .minibox .mini{{position:relative}}
+  .tablero{{stroke:#fff;stroke-opacity:.06}} .tbg{{fill:none;stroke:#fff;stroke-opacity:.05}}
+  .bgs{{fill:#e2e8f0}} .bgs.tw{{animation:twinkle 4s ease-in-out infinite}}
+  @media (prefers-reduced-motion: reduce){{.bgs.tw{{animation:none}}}}
+  .mini .snake-body{{stroke:#4f46e5}}
+  .msup .sq{{fill:#f8fafc;stroke:#cbd5e1}}
+  .msup.eaten .sq{{fill:#475569;stroke:#64748b}}
   .medge{{fill:none;stroke-linejoin:miter;stroke-opacity:0;stroke-width:2;stroke-dasharray:2 5;transition:stroke-opacity .3s}}
   .medge.main{{stroke:var(--accent)}} .medge.sec{{stroke:var(--med)}} .medge.sup{{stroke:var(--accent)}}
   .medge.lit{{stroke-opacity:.75}}
-  .snake-body{{stroke-linecap:square;stroke-linejoin:miter;stroke-width:9;stroke-dasharray:12 2}}
+  .snake-body{{stroke:#312e81;stroke-linecap:round;stroke-linejoin:round;stroke-width:10}}
+  .snake-glow{{fill:none;stroke:#8b5cf6;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;opacity:.3;filter:blur(3px)}}
+  .snake-dust{{fill:none;stroke:#e0e7ff;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:0 11 0 7 0 15;animation:dust 1.8s linear infinite}}
+  @keyframes dust{{to{{stroke-dashoffset:33}}}}
+  .snake-head{{fill:#312e81;stroke:#8b5cf6;stroke-width:1.6}}
+  .mini .snake-eye{{fill:#67e8f9}}
+  .antenna{{stroke:#8b5cf6;stroke-width:1.6;fill:none;stroke-linecap:round}}
+  .beacon{{fill:#f472b6;animation:beacon 1.4s ease-in-out infinite}}
+  @keyframes beacon{{50%{{fill:#fde68a;opacity:.5}}}}
+  .spark{{fill:#fde68a}} .spark.s-seg{{fill:#facc15}} .spark.s-glos,.spark.s-extra{{fill:#c4b5fd}}
+  @media (prefers-reduced-motion: reduce){{.snake-dust,.beacon{{animation:none}}}}
   .mini .mdot.done .blk,.mini .mdot.glos.done .gd{{opacity:1}}
   .mini .mdot .blk{{fill:var(--bg);stroke:var(--accent);stroke-width:2.2}}
   .mini .mdot.seg .blk{{stroke:var(--med)}}
   .mini .mdot.avance .mnum{{font:650 12px var(--display);fill:var(--accent);pointer-events:none}}
   .mini .blk .sh{{fill:var(--ink);stroke:none;transition:opacity .3s}}
-  .mini .ruby polygon{{stroke:#ca8a04;fill:#fef3c7;stroke-linejoin:round}}
-  .mini .ruby .facet{{fill:none;stroke:#ca8a04;stroke-width:1;opacity:.6}}
-  .mini .mdot.seg.done .ruby polygon{{fill:#facc15}}
-  .mini .mdot.seg.done .ruby .facet{{stroke:#a16207}}
-  .mini .mdot.cur .ruby polygon{{stroke:var(--ink)}}
+  .mini .flag .cloth{{fill:#fef3c7;stroke:#ca8a04;stroke-width:1.6;stroke-linejoin:round}}
+  .mini .flag .pole,.mini .flag .base{{fill:none;stroke:#fbbf24;stroke-width:2.4;stroke-linecap:round}}
+  .mini .mdot.seg.done .flag .cloth{{fill:#facc15}}
+  .mini .mdot.cur .flag .cloth{{stroke:var(--ink)}}
+  .mini .mdot.seg .flag .cloth{{transform-box:fill-box;transform-origin:left center;transition:transform .3s}}
+  .mini .mdot.seg.cur .flag .cloth{{animation:wave 1.4s ease-in-out infinite}}
+  @keyframes wave{{50%{{transform:skewY(-6deg) scaleX(.92)}}}}
+  @media (prefers-reduced-motion: reduce){{.mini .mdot.seg.cur .flag .cloth{{animation:none}}}}
   .mini .cube polygon{{stroke-linejoin:round}}
   .mini .mdot.avance.done .blk{{fill:var(--accent)}}
   .mini .mdot.avance.done .mnum{{fill:var(--bg)}}
@@ -596,8 +642,8 @@ page = f"""<title>AI Platform Engineering</title>
   .msup .sq{{transform-box:fill-box;transform-origin:center;animation:twinkle 3s ease-in-out infinite}}
   @keyframes twinkle{{50%{{opacity:.45;transform:scale(.85)}}}}
   @media (prefers-reduced-motion: reduce){{.msup .sq{{animation:none}}}}
-  .mprev{{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round;opacity:.7}}
-  .mkey rect{{fill:var(--ink);opacity:.85}} .mkey text{{font:700 11px var(--sans);fill:var(--bg)}}
+  .mprev{{fill:none;stroke:#7dd3fc;stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round;opacity:.7}}
+  .mkey rect{{fill:#e2e8f0;opacity:.95}} .mkey text{{font:700 11px var(--sans);fill:#0b1026}}
   .msup.avail,.msup.cur{{opacity:1}}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
 </style>
@@ -611,7 +657,7 @@ page = f"""<title>AI Platform Engineering</title>
     <span class="score" id="score" aria-live="polite">0 pts</span>
   </div>
 </div>
-<div class="minibox">{MINI_SVG}</div>
+<div class="minibox">{SKY_SVG}{MINI_SVG}</div>
 <main class="stage" id="stage" aria-live="polite"></main>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <template id="d-inj">{zip2.trifecta_svg()}</template>
@@ -634,7 +680,7 @@ page = f"""<title>AI Platform Engineering</title>
 
   // Serpiente: un solo trazo con toda la ruta; se revela hasta la posición actual y la cabeza recorre el trazo.
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var SG = document.getElementById("msnake"), BODY, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
+  var SG = document.getElementById("msnake"), BODY, GLOW, DUST, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
   // Serpiente con rastro: cada movimiento agrega un tramo desde la cabeza; los desvíos quedan en el camino.
   var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null, DIRECT = false, SHRINK = 0;
   function route(a, b) {{
@@ -821,17 +867,22 @@ page = f"""<title>AI Platform Engineering</title>
   }}
   function initSnake() {{
     BODY = el("path", {{ d: "M0,0", "class": "snake-geo" }});
+    // Serpiente espacial: halo de nebulosa, cuerpo índigo con polvo de estrellas y antena.
+    GLOW = el("path", {{ d: "M0,0", "class": "snake-glow" }});
     WIG = el("path", {{ d: "M0,0", "class": "snake-body" }});
+    DUST = el("path", {{ d: "M0,0", "class": "snake-dust" }});
     FOOD = el("rect", {{ width: 12, height: 12, rx: 2.5, "class": "food" }});
     FX = el("g", {{}});
     HEAD = el("g", {{}});
     var inner = el("g", {{ "class": "hd-in" }});
     inner.appendChild(el("path", {{ d: "M8,0 L15,0 M15,0 L18,-2.5 M15,0 L18,2.5", "class": "tongue" }}));
-    inner.appendChild(el("rect", {{ x: -9, y: -9, width: 18, height: 18, rx: 4.5, "class": "snake-head" }}));
-    inner.appendChild(el("rect", {{ x: 1.5, y: -5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
-    inner.appendChild(el("rect", {{ x: 1.5, y: 1.5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
+    inner.appendChild(el("path", {{ d: "M-5,-9 L-8,-15", "class": "antenna" }}));
+    inner.appendChild(el("circle", {{ cx: -8, cy: -16, r: 2.2, "class": "beacon" }}));
+    inner.appendChild(el("rect", {{ x: -10, y: -10, width: 20, height: 20, rx: 6, "class": "snake-head" }}));
+    inner.appendChild(el("rect", {{ x: 1.5, y: -5.5, width: 3.5, height: 3.5, rx: 1, "class": "snake-eye" }}));
+    inner.appendChild(el("rect", {{ x: 1.5, y: 2, width: 3.5, height: 3.5, rx: 1, "class": "snake-eye" }}));
     HEAD.appendChild(inner); HEADIN = inner;
-    SG.appendChild(BODY); SG.appendChild(FOOD); SG.appendChild(WIG); SG.appendChild(HEAD); SG.appendChild(FX);
+    SG.appendChild(BODY); SG.appendChild(FOOD); SG.appendChild(GLOW); SG.appendChild(WIG); SG.appendChild(DUST); SG.appendChild(HEAD); SG.appendChild(FX);
     resetTrail();
   }}
   // Como en Snake: el cuerpo tiene un largo que crece con lo que come y la cola sigue a la cabeza.
@@ -847,7 +898,10 @@ page = f"""<title>AI Platform Engineering</title>
     }}
     return d || "M0,0";
   }}
-  function drawBody(now) {{ WIG.setAttribute("d", CUR > 1 ? wave(SAMP, CUR, now / 170, 0) : "M0,0"); }}
+  function drawBody(now) {{
+    var d = CUR > 1 ? wave(SAMP, CUR, now / 170, 0) : "M0,0";
+    GLOW.setAttribute("d", d); WIG.setAttribute("d", d); DUST.setAttribute("d", d);
+  }}
   function tick(now) {{ drawBody(now); if (!REDUCED) requestAnimationFrame(tick); }}
   function burst(xy, cls) {{
     if (REDUCED) return;
@@ -920,6 +974,7 @@ page = f"""<title>AI Platform Engineering</title>
     else if (supAvail("a")) {{ b.hidden = false; b.textContent = arrowTo("xa" + p.i) + (D.supa[String(p.i)].t ? " extra: " + D.supa[String(p.i)].t : " preguntas"); }}
     else if (supAvail("s")) {{ b.hidden = false; b.textContent = arrowTo("xs" + p.i) + " preguntas"; }}
     else b.hidden = true;
+    b.title = b.textContent;
     var cn = curNode();
     document.querySelectorAll(".medge").forEach(function (e) {{
       e.classList.toggle("lit", e.getAttribute("data-a") === cn || e.getAttribute("data-b") === cn);
