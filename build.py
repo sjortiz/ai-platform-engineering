@@ -55,7 +55,7 @@ def build(script, src_html, out):
 
 missing = set(build("zip3.py", "cremallera.html", "index.html"))
 missing |= set(build("zip3_anos.py", "cremallera-anos.html", "por-anos.html"))
-missing |= set(build("zip3_grafo.py", "cremallera-grafo.html", "grafo.html"))
+missing |= set(build("zip3_espacio.py", "cremallera-espacio.html", "espacio.html"))
 if missing:
     print(f"\n{len(missing)} textos sin traducción en i18n/en.json (quedan en español en en/):", file=sys.stderr)
     for m in sorted(missing)[:40]:
