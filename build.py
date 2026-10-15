@@ -23,7 +23,7 @@ def lang_nav(lang, out):
 
 def build(script, src_html, out):
     subprocess.run([sys.executable, script], cwd=ROOT / "src", check=True, stdout=subprocess.DEVNULL)
-    page = (ROOT / "src" / src_html).read_text()
+    page = (ROOT / "src" / src_html).read_text().removeprefix('<meta charset="utf-8">\n')
     cut = page.index("</style>") + len("</style>")
     head = page[:cut].replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
     body = page[cut:]
@@ -55,6 +55,7 @@ def build(script, src_html, out):
 
 missing = set(build("zip3.py", "cremallera.html", "index.html"))
 missing |= set(build("zip3_anos.py", "cremallera-anos.html", "por-anos.html"))
+missing |= set(build("zip3_grafo.py", "cremallera-grafo.html", "grafo.html"))
 if missing:
     print(f"\n{len(missing)} textos sin traducción en i18n/en.json (quedan en español en en/):", file=sys.stderr)
     for m in sorted(missing)[:40]:

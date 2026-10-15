@@ -602,6 +602,16 @@ SUPA = {
                   ("¿Funciona sin internet?", "Sí: una vez descargado, el modelo corre sin red.")]),
 }
 
+# Diagrama de la «lethal trifecta» en la parada de prompt injection: (nombre, ejemplos), en dos líneas cada uno.
+TRIFECTA = dict(
+    titulo="Lethal trifecta (Simon Willison, 2025)",
+    a=(("Datos", "privados"), ("repo · .env", "correo")),
+    b=(("Contenido", "no confiable"), ("web · tickets", "PRs")),
+    c=(("Salida al", "exterior"), ("HTTP · correo", "imágenes")),
+    centro=("fuga de", "datos"),
+    nota="Con las tres, una instrucción escondida saca tus datos. Quita una.",
+)
+
 # Riel inferior: preguntas de cada parada de seguridad.
 SUPS = {
     2: [("¿Hay una defensa completa contra el prompt injection?", "No. Se limita el daño: permisos mínimos, no juntar contenido no confiable con una salida al exterior, y clasificadores."),

@@ -16,8 +16,8 @@ ATTR = re.compile(r'\b(' + "|".join(ATTRS) + r')="([^"]*)"')
 WORD = re.compile(r"[A-Za-zÁÉÍÓÚÑáéíóúñü]{2}")
 
 
-def _wordy(s):
-    if re.fullmatch(r"[a-z][\w.:#-]*|[\w-]+=[\w,= .-]+", s):  # identificadores, eventos, selectores, viewport
+def _wordy(s, code=False):
+    if code and re.fullmatch(r"[a-z][\w.:#-]*|[\w-]+=[\w,= .-]+", s):  # identificadores, eventos, selectores, viewport
         return False
     return bool(WORD.search(re.sub(r"<[^>]+>|&\w+;", "", s)))
 
@@ -101,7 +101,7 @@ def _raw(page):
             lits = _js_strings(js)
             ids = _ids(js, lits)
             for a, b, q, v in lits:
-                if v not in ids and _wordy(v):
+                if v not in ids and _wordy(v, code=True):
                     yield "js:" + q, base + a, base + b, v
         pos = m.end(2)
     yield from _html(page, pos, len(page))
@@ -123,7 +123,7 @@ def _html(page, a, b):
             run_start = last
         name = (m.group(2) or "").lower()
         for am in ATTR.finditer(m.group(3) or ""):
-            if _wordy(am.group(2)):
+            if _wordy(am.group(2), code=True):
                 s = a + m.start(3) + am.start(2)
                 yield "attr", s, s + len(am.group(2)), am.group(2)
         if name in INLINE:

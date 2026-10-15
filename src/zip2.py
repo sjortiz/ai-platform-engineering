@@ -1,7 +1,7 @@
 """Genera cremallera.html: dos rieles (avance y seguridad) que se juntan en "Hoy", estilo mapa maestro."""
 import html
 import json
-from detalle import INFO, LLEVA, EJEMPLO, ERROR
+from detalle import INFO, LLEVA, EJEMPLO, ERROR, TRIFECTA
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -350,3 +350,26 @@ page = f"""<title>El cuello se mueve</title>
 
 (HERE / "cremallera.html").write_text(page)
 print(len(page))
+
+
+def trifecta_svg():
+    """Tres círculos; la intersección de los tres es la fuga."""
+    t, r = TRIFECTA, 96
+    ca, cb, cc = (160, 118), (280, 118), (220, 222)
+    circ = lambda c, **k: f'<circle cx="{c[0]}" cy="{c[1]}" r="{r}"' + "".join(f' {a}="{v}"' for a, v in k.items()) + "/>"
+
+    def label(key, x, y):
+        (l1, l2), (x1, x2) = t[key]
+        return (f'<text class="tfn" x="{x}" y="{y}" text-anchor="middle">{e(l1)}</text>'
+                f'<text class="tfn" x="{x}" y="{y + 17}" text-anchor="middle">{e(l2)}</text>'
+                f'<text class="tfx" x="{x}" y="{y + 34}" text-anchor="middle">{e(x1)}</text>'
+                f'<text class="tfx" x="{x}" y="{y + 48}" text-anchor="middle">{e(x2)}</text>')
+    return (f'<figure class="xdiag tri"><figcaption>{e(t["titulo"])}</figcaption>'
+            f'<svg viewBox="0 0 440 330" role="img" aria-label="{e(t["nota"])}">'
+            f'<defs><clipPath id="tri-a">{circ(ca)}</clipPath><clipPath id="tri-b">{circ(cb)}</clipPath></defs>'
+            + circ(ca, **{"class": "tfc"}) + circ(cb, **{"class": "tfc"}) + circ(cc, **{"class": "tfc"})
+            + f'<g clip-path="url(#tri-a)"><g clip-path="url(#tri-b)">{circ(cc, **{"class": "tfk"})}</g></g>'
+            + label("a", 112, 80) + label("b", 328, 80) + label("c", 220, 254)
+            + f'<text class="tfm" x="220" y="150" text-anchor="middle">{e(t["centro"][0])}</text>'
+            f'<text class="tfm" x="220" y="165" text-anchor="middle">{e(t["centro"][1])}</text>'
+            f'</svg><p class="tfnote">{e(t["nota"])}</p></figure>')

@@ -33,7 +33,7 @@ MYA, MYT, MYB, MYZ = 16, 56, 100, 138
 MYH = (MYT + MYB) // 2
 mxs = [round(MX0 + k * (MXN - MX0) / (N - 1), 1) for k in range(N)]
 STEPW = (MXN - MX0) / (N - 1)
-SEGDX, GLODX, SUPADX, SUPSDX = round(STEPW * .46, 1), round(STEPW * .08, 1), round(STEPW * .22, 1), round(STEPW * .2, 1)
+SEGDX, SUPADX, SUPSDX = round(STEPW * .46, 1), round(STEPW * .22, 1), round(STEPW * .2, 1)
 
 
 def coord(p):
@@ -43,9 +43,9 @@ def coord(p):
         return [MXHOY - 16, MYH]
     x = mxs[p["i"] - 1]
     if p["k"] == "glos":
-        return [round(x - GLODX, 1), MYT]
+        return [round(x - STEPW * .4, 1), MYT]
     if p["k"] == "seg":
-        dx = SEGDX if p["c"] == 1 else STEPW * (.30, .54)[p["n"]]
+        dx = SEGDX if p["c"] == 1 else STEPW * (.26, .62)[p["n"]]
         return [round(x + dx, 1), MYB]
     return [x, MYT]
 
@@ -389,6 +389,13 @@ page = f"""<title>AI Platform Engineering</title>
   .xfile,.xdiag{{margin:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--bg)}}
   .xfile figcaption,.xdiag figcaption{{font-family:var(--mono);font-size:.72rem;color:var(--muted);background:var(--panel-2);
     border-bottom:1px solid var(--line);padding:5px 10px}}
+  .tri svg{{display:block;width:100%;max-width:400px;margin:6px auto 0}}
+  .tri .tfc{{fill:var(--med-bg);fill-opacity:.55;stroke:var(--med);stroke-width:1.5}}
+  .tri .tfk{{fill:var(--crit)}}
+  .tri .tfn{{font:600 14px var(--sans);fill:var(--ink)}}
+  .tri .tfx{{font:11px var(--mono);fill:var(--muted)}}
+  .tri .tfm{{font:700 12px var(--sans);fill:var(--bg)}}
+  .tri .tfnote{{margin:0;padding:4px 12px 9px;font-size:.92rem;font-weight:600;color:var(--crit);text-align:center}}
   .xfile pre{{margin:0;padding:9px 12px;font-family:var(--mono);font-size:.74rem;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}}
   .flow-h{{display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px;padding:12px}}
   .flow-h .fn{{border:1px solid var(--line-2);border-radius:7px;padding:5px 9px;font-size:.84rem;font-weight:600;background:var(--panel)}}
@@ -436,7 +443,7 @@ page = f"""<title>AI Platform Engineering</title>
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por pasos</span><a href="por-anos.html">Por años</a></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por pasos</span><a href="por-anos.html">Por años</a><a href="grafo.html">Grafo</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -448,6 +455,7 @@ page = f"""<title>AI Platform Engineering</title>
 <div class="minibox">{MINI_SVG}</div>
 <main class="stage" id="stage" aria-live="polite"></main>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<template id="d-inj">{zip2.trifecta_svg()}</template>
 <template id="t-map">
   <div class="mapslide">
     <h2>El mapa completo</h2>
@@ -709,6 +717,10 @@ page = f"""<title>AI Platform Engineering</title>
         '</aside>' +
       '</div></div>';
   }}
+  function tplHTML(id) {{
+    var t = document.getElementById(id);
+    return t ? t.innerHTML : "";
+  }}
   function secSlide(p, d) {{
     var i = p.i, step = D.detail[String(i)];
     var mine = d.sec.filter(function (s) {{ return s.id === p.t || (s.rel === "habilita" && p.n === 0); }});
@@ -718,7 +730,7 @@ page = f"""<title>AI Platform Engineering</title>
         (s.rel === "habilita" ? ' <span class="relx">habilita este paso · explicado en el paso 3</span>' : '');
       if (s.rel === "habilita") return '<div class="ssec">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
       return '<div class="ssec">' + sub(head) +
-        '<div class="ssgrid"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + '</div>' +
+        '<div class="ssgrid"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + tplHTML("d-" + s.id) + '</div>' +
         '<div>' + (x.claude ? howBlock(x, "En tu agente") : '') +
           (x.lleva ? '<div class="mlbl gap">Llévate esto</div><ul class="take">' + li(x.lleva) + '</ul>' : '') +
           (x.err ? '<div class="mlbl gap warn">Error común</div><p class="txt">' + esc(x.err) + '</p>' : '') +

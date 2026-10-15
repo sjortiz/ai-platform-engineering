@@ -38,25 +38,19 @@ MX0, MXN, MXHOY = 70, 1190, 1336
 TLY = 16
 MYA, MYT, MYB, MYZ = 44, 84, 128, 166
 MYH = (MYT + MYB) // 2
-mxs = [round(MX0 + k * (MXN - MX0) / (N - 1), 1) for k in range(N)]
-STEPW = (MXN - MX0) / (N - 1)
-SEGDX, GLODX, SUPADX, SUPSDX = round(STEPW * .46, 1), round(STEPW * .08, 1), round(STEPW * .22, 1), round(STEPW * .2, 1)
 
 
 NCAP = len(P2.CAPS)
-counts = [sum(1 for q in POS if q["k"] not in ("portada", "hoy", "mapa") and q["cc"] == ci) for ci in range(NCAP)]
-tot = sum(c + 1.2 for c in counts)
-CAPX = [MX0 - 20]
-for c in counts:
-    CAPX.append(CAPX[-1] + (MXN + 20 - (MX0 - 20)) * (c + 1.2) / tot)
-_k = {ci: 0 for ci in range(NCAP)}
-for q in POS:
-    if q["k"] in ("portada", "hoy", "mapa"):
-        continue
-    ci = q["cc"]
-    q["sx"] = round(CAPX[ci] + (CAPX[ci + 1] - CAPX[ci]) * (_k[ci] + 0.7) / (counts[ci] + 1.2), 1)
-    _k[ci] += 1
-
+# Separación por par de paradas vecinas: más espacio si quedan en la misma fila o cambian de capítulo.
+SEQ = [q for q in POS if q["k"] not in ("portada", "hoy", "mapa")]
+row = lambda q: "s" if q["k"] == "seg" else "a"
+gaps = [(1.0 if row(a) == row(b) else .55) + (.35 if b["k"] == "cap" else 0) for a, b in zip(SEQ, SEQ[1:])]
+unit = (MXN - MX0 + 30) / (sum(gaps) + 1)
+x = MX0 - 15 + unit / 2
+for k, q in enumerate(SEQ):
+    x += unit * gaps[k - 1] if k else 0
+    q["sx"] = round(x, 1)
+CAPX = [MX0 - 20] + [round(q["sx"] - unit * .55, 1) for q in SEQ if q["k"] == "cap"][1:] + [MXN + 20]
 
 def coord(p):
     if p["k"] == "portada":
@@ -224,7 +218,10 @@ page = f"""<title>AI Platform Engineering</title>
   .capneck .v{{font-family:var(--display);font-size:2rem;font-weight:600;color:var(--crit);line-height:1.15;margin:2px 0 4px}}
   .capneck p{{margin:0;font-size:1rem;max-width:none}}
   .capslide .chips{{display:flex;flex-wrap:wrap;gap:8px}}
-  .capslide .chip{{border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;font-size:.98rem;background:var(--bg)}}
+  .capslide .chip{{border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;font:inherit;font-size:.98rem;color:inherit;background:var(--bg);cursor:pointer}}
+  .capslide .chip:hover{{border-color:var(--accent);background:var(--accent-soft)}}
+  .capslide .chip:focus-visible{{outline:2px solid var(--accent);outline-offset:2px}}
+  .capslide .chip::after{{content:" →";color:var(--accent)}}
   .capslide .chip b{{font-family:var(--display);color:var(--accent);margin-right:6px}}
   .capslide .chip.s{{border-left:4px solid var(--med)}}
   .mode{{display:inline-flex;margin-left:14px;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;vertical-align:middle}}
@@ -438,6 +435,13 @@ page = f"""<title>AI Platform Engineering</title>
   .xfile,.xdiag{{margin:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--bg)}}
   .xfile figcaption,.xdiag figcaption{{font-family:var(--mono);font-size:.72rem;color:var(--muted);background:var(--panel-2);
     border-bottom:1px solid var(--line);padding:5px 10px}}
+  .tri svg{{display:block;width:100%;max-width:400px;margin:6px auto 0}}
+  .tri .tfc{{fill:var(--med-bg);fill-opacity:.55;stroke:var(--med);stroke-width:1.5}}
+  .tri .tfk{{fill:var(--crit)}}
+  .tri .tfn{{font:600 14px var(--sans);fill:var(--ink)}}
+  .tri .tfx{{font:11px var(--mono);fill:var(--muted)}}
+  .tri .tfm{{font:700 12px var(--sans);fill:var(--bg)}}
+  .tri .tfnote{{margin:0;padding:4px 12px 9px;font-size:.92rem;font-weight:600;color:var(--crit);text-align:center}}
   .xfile pre{{margin:0;padding:9px 12px;font-family:var(--mono);font-size:.74rem;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}}
   .flow-h{{display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px;padding:12px}}
   .flow-h .fn{{border:1px solid var(--line-2);border-radius:7px;padding:5px 9px;font-size:.84rem;font-weight:600;background:var(--panel)}}
@@ -485,7 +489,7 @@ page = f"""<title>AI Platform Engineering</title>
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="./">Por pasos</a><span aria-current="page">Por años</span></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="./">Por pasos</a><span aria-current="page">Por años</span><a href="grafo.html">Grafo</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -497,6 +501,7 @@ page = f"""<title>AI Platform Engineering</title>
 <div class="minibox">{MINI_SVG}</div>
 <main class="stage" id="stage" aria-live="polite"></main>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<template id="d-inj">{zip2.trifecta_svg()}</template>
 <template id="t-map">
   <div class="mapslide">
     <h2>El mapa completo</h2>
@@ -758,6 +763,10 @@ page = f"""<title>AI Platform Engineering</title>
         '</aside>' +
       '</div></div>';
   }}
+  function tplHTML(id) {{
+    var t = document.getElementById(id);
+    return t ? t.innerHTML : "";
+  }}
   function secSlide(p, d) {{
     var i = p.i, step = D.detail[String(i)];
     var mine = d.sec.filter(function (s) {{ return s.id === p.t || (s.rel === "habilita" && p.n === 0); }});
@@ -767,7 +776,7 @@ page = f"""<title>AI Platform Engineering</title>
         (s.rel === "habilita" ? ' <span class="relx">habilita este paso · explicado en el paso 3</span>' : '');
       if (s.rel === "habilita") return '<div class="ssec">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
       return '<div class="ssec">' + sub(head) +
-        '<div class="ssgrid"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + '</div>' +
+        '<div class="ssgrid"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + tplHTML("d-" + s.id) + '</div>' +
         '<div>' + (x.claude ? howBlock(x, "En tu agente") : '') +
           (x.lleva ? '<div class="mlbl gap">Llévate esto</div><ul class="take">' + li(x.lleva) + '</ul>' : '') +
           (x.err ? '<div class="mlbl gap warn">Error común</div><p class="txt">' + esc(x.err) + '</p>' : '') +
@@ -849,9 +858,10 @@ page = f"""<title>AI Platform Engineering</title>
       '<div class="bl"></div><button type="button" class="again" id="b-again">Jugar de nuevo</button></div>' + document.getElementById("t-map").innerHTML;
     if (p.k === "cap") {{
       var cp = D.caps[p.c];
-      var en = D.pos.filter(function (q) {{ return q.cc === p.c && (q.k === "avance" || q.k === "seg"); }}).map(function (q) {{
-        return q.k === "avance" ? '<span class="chip"><b>' + q.i + '</b>' + esc(D.detail[String(q.i)].t) + '</span>'
-          : '<span class="chip s">' + esc(D.secx[q.t] ? (D.detail[String(q.i)].sec.filter(function (x) {{ return x.id === q.t; }})[0] || {{}}).n || q.t : q.t) + '</span>';
+      var en = D.pos.map(function (q, j) {{
+        if (q.cc !== p.c || (q.k !== "avance" && q.k !== "seg")) return "";
+        return q.k === "avance" ? '<button type="button" class="chip" data-go="' + j + '"><b>' + q.i + '</b>' + esc(D.detail[String(q.i)].t) + '</button>'
+          : '<button type="button" class="chip s" data-go="' + j + '">' + esc(D.secx[q.t] ? (D.detail[String(q.i)].sec.filter(function (x) {{ return x.id === q.t; }})[0] || {{}}).n || q.t : q.t) + '</button>';
       }}).join("");
       return '<div class="sslide capslide"><header class="stitle"><span class="num">Capítulo ' + (p.c + 1) + ' de ' + D.caps.length + '</span><h2>' + esc(cp.k) + ' · ' + esc(cp.titulo) + '</h2></header>' +
         '<p class="caplead">' + esc(cp.lead) + '</p>' +
@@ -914,7 +924,7 @@ page = f"""<title>AI Platform Engineering</title>
     m.addEventListener("keydown", function (ev) {{ if (ev.key === "Enter" || ev.key === " ") {{ ev.preventDefault(); pick(); }} }});
   }});
   document.addEventListener("keydown", function (ev) {{
-    if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup")) return;
+    if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup,[data-go]")) return;
     if (ev.key === "ArrowRight" || ev.key === "PageDown" || ev.key === " ") {{ ev.preventDefault(); go(P + 1); }}
     else if (ev.key === "ArrowLeft" || ev.key === "PageUp") {{ ev.preventDefault(); go(P - 1); }}
     else if (ev.key === "Home") {{ go(0); }} else if (ev.key === "End") {{ go(LAST); }}
@@ -939,6 +949,8 @@ page = f"""<title>AI Platform Engineering</title>
   }});
   document.getElementById("stage").addEventListener("click", function (ev) {{
     if (ev.target && ev.target.id === "b-again") restart();
+    var c = ev.target && ev.target.closest && ev.target.closest("[data-go]");
+    if (c) go(+c.getAttribute("data-go"));
   }});
   var FIRST = true;
   initSnake();
