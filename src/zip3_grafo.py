@@ -34,11 +34,11 @@ POS.append(dict(k="mapa", i=N + 2))
 # comida grande, la seguridad la mediana y el apoyo (vocabulario, extras, preguntas) la chica.
 # La posición sale de una relajación con semilla fija y después se ajusta a la cuadrícula.
 G = 16
-MW, MH = 1408, 208
+MW, MH = 1408, 256
 MX0, MXN, XHOY = 100, 1180, 1316
 STEPW = (MXN - MX0) / (N - 1)
 RND = random.Random(11)
-RAD = dict(portada=10, avance=14, hoy=24, seg=9, glos=7, xa=5, xs=5)
+RAD = dict(portada=10, avance=19, hoy=28, seg=12, glos=7, xa=5, xs=5)
 NODES, EDGES = {}, []
 
 
@@ -51,11 +51,14 @@ def edge(a, b, k):
 
 
 node("start", "portada", 34, 92)
-# Cada paso queda a una o dos filas del anterior: se ve disperso, pero → es casi un tramo recto.
-y = 88
+# Los pasos se reparten por todo el alto del tablero, a 3–7 filas del anterior. → siempre lleva al
+# siguiente, así que el recorrido sigue siendo lineal aunque no lo parezca.
+# Un paso con seguridad necesita lugar para su rama (60 + 36) de un lado y el extra (44) del otro.
+y = 136
 for i in range(1, N + 1):
-    y = min(104, max(56, y + RND.choice((-32, -16, 16, 32))))
-    node(f"a{i}", "avance", MX0 + (i - 1) * STEPW + RND.uniform(-14, 14), y)
+    lo, hi = (72, 184) if i in SEC_AT else (40, 216)
+    y = RND.choice([v for v in range(lo, hi + 1, 16) if 48 <= abs(v - y) <= 112])
+    node(f"a{i}", "avance", MX0 + (i - 1) * STEPW + RND.uniform(-24, 24), y)
 node("hoy", "hoy", XHOY, 100)
 NODES["start"]["xy"][1] = NODES["a1"]["xy"][1]
 NODES["hoy"]["xy"][1] = NODES[f"a{N}"]["xy"][1]
@@ -66,7 +69,8 @@ for i in GLOS:
 edge("start", "a1", "main")
 SUPOF = {}
 # Como mucho cuatro vecinos por nodo, uno por flecha: ← paso anterior, → siguiente (el vocabulario
-# queda en el camino), ↑ extra y ↓ la rama de seguridad, que termina en sus preguntas.
+# queda en el camino), el extra y la rama de seguridad (que termina en sus preguntas) arriba o abajo,
+# del lado donde haya lugar.
 for i in range(1, N + 1):
     ai, after = f"a{i}", nxt(i)
     gl = f"g{i + 1}" if i + 1 in GLOS else None
@@ -77,18 +81,21 @@ for i in range(1, N + 1):
         edge(ai, after, "main")
     tops = [x["id"] for x in zip2.SEC if x["at"] == i]
     x, y = NODES[ai]["xy"]
+    sd = 1 if y <= 128 else -1  # la seguridad va hacia el lado con más lugar y el extra al otro
+    if not tops:
+        sd = -1 if y > MH / 2 else 1
     prev = ai
     for n, t in enumerate(tops):
-        node(f"s{t}", "seg", x + STEPW * .5 * n, y + 50)
+        node(f"s{t}", "seg", x + STEPW * .5 * n, y + 60 * sd)
         edge(prev, f"s{t}", "sec")
         prev = f"s{t}"
     if i in SUPA:
-        node(f"xa{i}", "xa", x, y - 34)
+        node(f"xa{i}", "xa", x, y - 44 * sd)
         edge(ai, f"xa{i}", "sup")
         SUPOF[f"xa{i}"] = ai
     if i in SUPS:
         sx, sy = NODES[prev]["xy"]
-        node(f"xs{i}", "xs", sx, sy + 30)
+        node(f"xs{i}", "xs", sx, sy + 36 * sd)
         edge(prev, f"xs{i}", "sup")
         SUPOF[f"xs{i}"] = prev
 
@@ -113,7 +120,7 @@ for _ in range(400):
     for sat, par in SUPOF.items():
         (xp, yp), (xs, ys) = NODES[par]["xy"], NODES[sat]["xy"]
         d = math.hypot(xs - xp, ys - yp) or .01
-        f = (32 - d) / d * .5
+        f = (40 - d) / d * .5
         mv[sat][0] += (xs - xp) * f; mv[sat][1] += (ys - yp) * f
     for n in ids:
         k, xy = NODES[n]["k"], NODES[n]["xy"]
@@ -135,7 +142,8 @@ for n in sorted(ids, key=lambda n: -RAD[NODES[n]["k"]]):
     cands = sorted(((cx + dx, cy + dy) for dx in range(-6, 7) for dy in range(-4, 5)
                     if 1 <= cy + dy <= MH // G - 2 and (cx + dx, cy + dy) not in used), key=lambda c: abs(c[0] - cx) + abs(c[1] - cy))
     c = cands[0]
-    used.update((c[0] + dx, c[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+    r = 2 if NODES[n]["k"] in ("avance", "seg", "hoy") else 1  # deja un pasillo entre los bloques grandes
+    used.update((c[0] + dx, c[1] + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1))
     NODES[n]["xy"] = [c[0] * G + G // 2, c[1] * G + G // 2]
 
 def pos_node(p):
@@ -151,6 +159,32 @@ for a, b, _ in EDGES:
     ADJ.setdefault(a, []).append(b)
     ADJ.setdefault(b, []).append(a)
 
+def pts(xy):
+    return " ".join(f"{a:.1f},{b:.1f}" for a, b in xy)
+
+
+# Figuras del tablero: cubo para los pasos, rubí para la seguridad y estrella para las preguntas.
+def cube(x, y, s=20):
+    w, top, ul, ur, ll, lr, bot = s * .87, (x, y - s), (x - s * .87, y - s / 2), (x + s * .87, y - s / 2), (x - s * .87, y + s / 2), (x + s * .87, y + s / 2), (x, y + s)
+    c = (x, y)
+    return (f'<g class="blk cube"><polygon class="f1" points="{pts((top, ur, c, ul))}"/>'
+            f'<polygon class="f2" points="{pts((ul, c, bot, ll))}"/><polygon class="f3" points="{pts((c, ur, lr, bot))}"/>'
+            f'<polygon class="sh" points="{pts((ul, c, bot, ll))}" opacity=".08"/><polygon class="sh" points="{pts((c, ur, lr, bot))}" opacity=".2"/></g>')
+
+
+def ruby(x, y, s=14):
+    gl, gr, cl, cr, b = (x - s, y - s * .25), (x + s, y - s * .25), (x - s * .5, y - s * .75), (x + s * .5, y - s * .75), (x, y + s * .85)
+    return (f'<g class="blk ruby"><polygon points="{pts((cl, cr, gr, b, gl))}"/>'
+            f'<path class="facet" d="M{gl[0]:.1f},{gl[1]:.1f} H{gr[0]:.1f} M{x - s * .3:.1f},{gl[1]:.1f} L{x:.1f},{b[1]:.1f} L{x + s * .3:.1f},{gl[1]:.1f} '
+            f'M{cl[0]:.1f},{cl[1]:.1f} L{x - s * .3:.1f},{gl[1]:.1f} M{cr[0]:.1f},{cr[1]:.1f} L{x + s * .3:.1f},{gl[1]:.1f}"/></g>')
+
+
+def star(x, y, r, k=0):
+    ang = [math.pi / 2 + j * math.pi / 5 for j in range(10)]
+    xy = [(x + math.cos(a) * (r if j % 2 == 0 else r * .45), y - math.sin(a) * (r if j % 2 == 0 else r * .45)) for j, a in enumerate(ang)]
+    return f'<polygon class="sq" points="{pts(xy)}" style="animation-delay:-{(k * 0.37) % 3:.2f}s"/>'
+
+
 mini = [f'<defs><pattern id="tablero" width="{2 * G}" height="{2 * G}" patternUnits="userSpaceOnUse">'
         f'<rect class="tb1" width="{2 * G}" height="{2 * G}"/><rect class="tb2" width="{G}" height="{G}"/>'
         f'<rect class="tb2" x="{G}" y="{G}" width="{G}" height="{G}"/></pattern></defs>'
@@ -160,33 +194,33 @@ for i in SUPA:
     big = " big" if SUPA[i].get("t") else ""
     mini.append(f'<g class="msup{big}" data-sup="a" data-i="{i}" tabindex="0" role="button" aria-label="Extra del paso {i}">'
                 f'<rect class="hit" x="{x - 12}" y="{y - 12}" width="24" height="24"/>'
-                f'<rect class="sq" x="{x - 5}" y="{y - 5}" width="10" height="10" rx="1.5"/></g>')
+                f'{star(x, y, 10 if big else 8, i)}</g>')
 for i in SUPS:
     x, y = NODES[f"xs{i}"]["xy"]
     mini.append(f'<g class="msup" data-sup="s" data-i="{i}" tabindex="0" role="button" aria-label="Preguntas de seguridad del paso {i}">'
                 f'<rect class="hit" x="{x - 12}" y="{y - 12}" width="24" height="24"/>'
-                f'<rect class="sq" x="{x - 5}" y="{y - 5}" width="10" height="10" rx="1.5"/></g>')
+                f'{star(x, y, 8, i + 20)}</g>')
 for idx, p in enumerate(POS):
     if p["k"] in ("portada", "mapa"):
         continue
     x, y = p["xy"]
     if p["k"] == "hoy":
         mini.append(f'<g class="mdot hoy" data-p="{idx}" tabindex="0" role="button" aria-label="Hoy">'
-                    f'<rect x="{x - 24}" y="{y - 13}" width="48" height="26" rx="3"/><text x="{x}" y="{y + 4}" text-anchor="middle">Hoy</text></g>')
+                    f'<rect x="{x - 28}" y="{y - 16}" width="56" height="32" rx="3"/><text x="{x}" y="{y + 5}" text-anchor="middle">Hoy</text></g>')
         continue
     if p["k"] == "glos":
         mini.append(f'<g class="mdot glos" data-p="{idx}" tabindex="0" role="button" aria-label="Vocabulario">'
                     f'<rect class="hit" x="{x - 14}" y="{y - 14}" width="28" height="28"/>'
-                    f'<rect class="gd" x="{x - 6}" y="{y - 6}" width="12" height="12" rx="1.5"/></g>')
+                    f'<rect class="gd" x="{x - 6}" y="{y - 6}" width="12" height="12" rx="1.5" transform="rotate(45 {x} {y})"/></g>')
         continue
     label = f'Paso {p["i"]}' + (" · seguridad" if p["k"] == "seg" else "")
     if p["k"] == "avance":
         mini.append(f'<g class="mdot avance" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
-                    f'<rect class="hit" x="{x - 18}" y="{y - 18}" width="36" height="36"/>'
-                    f'<rect class="blk" x="{x - 13}" y="{y - 13}" width="26" height="26" rx="3"/><text class="mnum" x="{x}" y="{y + 4}" text-anchor="middle">{p["i"]}</text></g>')
+                    f'<rect class="hit" x="{x - 22}" y="{y - 22}" width="44" height="44"/>'
+                    f'{cube(x, y)}<text class="mnum" x="{x}" y="{y - 5}" text-anchor="middle">{p["i"]}</text></g>')
     else:
         mini.append(f'<g class="mdot seg" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
-                    f'<rect class="hit" x="{x - 14}" y="{y - 14}" width="28" height="28"/><rect class="blk" x="{x - 8}" y="{y - 8}" width="16" height="16" rx="2"/></g>')
+                    f'<rect class="hit" x="{x - 16}" y="{y - 16}" width="32" height="32"/>{ruby(x, y)}</g>')
 
 mini.append('<g id="msnake"></g><g id="mkeys" aria-hidden="true"></g>')
 MINI_SVG = f'<svg class="mini" viewBox="0 0 {MW} {MH}" role="navigation" aria-label="Índice de la charla">{"".join(mini)}</svg>'
@@ -285,7 +319,7 @@ page = f"""<title>AI Platform Engineering</title>
   .msup{{cursor:pointer}}
   .msup:focus{{outline:none}}
   .msup .hit{{fill:transparent}}
-  .msup .sq{{fill:var(--bg);stroke:var(--faint);stroke-width:1.4}}
+  .msup .sq{{fill:#f8fafc;stroke:#64748b;stroke-width:1.2;stroke-linejoin:round}}
   .msup.big .sq{{stroke:var(--accent);stroke-width:2}}
   .msup.avail .sq{{fill:var(--crit-bg);stroke:var(--crit);stroke-width:1.8}}
   .msup.cur .sq{{fill:var(--accent);stroke:var(--accent)}}
@@ -308,9 +342,9 @@ page = f"""<title>AI Platform Engineering</title>
   .mdot.done circle,.mdot.glos.done .gd{{opacity:0;transition:opacity .2s}}
   .mdot.seg.done circle{{fill:var(--med)}}
   .mdot.hoy rect{{fill:var(--bg);stroke:var(--accent);stroke-width:2}}
-  .mdot.hoy text{{font:600 12px var(--display);fill:var(--accent)}}
+  .mdot.hoy text{{font:600 14px var(--display);fill:var(--accent)}}
   .mdot.hoy.done rect{{fill:var(--accent)}} .mdot.hoy.done text{{fill:var(--bg)}}
-  .mnum{{font:600 11px var(--display);fill:var(--muted)}}
+  .mnum{{font:600 15px var(--display);fill:var(--muted)}}
   .mdot.cur .mnum{{fill:var(--accent)}}
   .snake-geo{{fill:none;stroke:none}}
   .snake-body{{fill:none;stroke:var(--ok);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}}
@@ -537,7 +571,7 @@ page = f"""<title>AI Platform Engineering</title>
     .secwrap .link{{margin-left:24px}}
     .cols{{grid-template-columns:minmax(0,1fr)}}
   }}
-  .mini{{max-height:150px}}
+  .mini{{max-height:185px}}
   .tablero{{stroke:var(--line-2)}} .tb1{{fill:var(--bg)}} .tb2{{fill:var(--panel-2);opacity:.55}}
   .medge{{fill:none;stroke-linejoin:miter;stroke-opacity:0;stroke-width:2;stroke-dasharray:2 5;transition:stroke-opacity .3s}}
   .medge.main{{stroke:var(--accent)}} .medge.sec{{stroke:var(--med)}} .medge.sup{{stroke:var(--accent)}}
@@ -546,15 +580,25 @@ page = f"""<title>AI Platform Engineering</title>
   .mini .mdot.done .blk,.mini .mdot.glos.done .gd{{opacity:1}}
   .mini .mdot .blk{{fill:var(--bg);stroke:var(--accent);stroke-width:2.2}}
   .mini .mdot.seg .blk{{stroke:var(--med)}}
-  .mini .mdot.avance .mnum{{font:600 13px var(--display);fill:var(--accent)}}
+  .mini .mdot.avance .mnum{{font:650 12px var(--display);fill:var(--accent);pointer-events:none}}
+  .mini .blk .sh{{fill:var(--ink);stroke:none;transition:opacity .3s}}
+  .mini .ruby polygon{{stroke:#ca8a04;fill:#fef3c7;stroke-linejoin:round}}
+  .mini .ruby .facet{{fill:none;stroke:#ca8a04;stroke-width:1;opacity:.6}}
+  .mini .mdot.seg.done .ruby polygon{{fill:#facc15}}
+  .mini .mdot.seg.done .ruby .facet{{stroke:#a16207}}
+  .mini .mdot.cur .ruby polygon{{stroke:var(--ink)}}
+  .mini .cube polygon{{stroke-linejoin:round}}
   .mini .mdot.avance.done .blk{{fill:var(--accent)}}
   .mini .mdot.avance.done .mnum{{fill:var(--bg)}}
   .mini .mdot.seg.done .blk{{fill:var(--med)}}
   .mini .mdot.cur .blk{{stroke:var(--ink);stroke-width:3}}
-  .msup .sq{{opacity:.3;transition:opacity .3s}}
+  .msup{{opacity:var(--near,.3);transition:opacity .25s}}
+  .msup .sq{{transform-box:fill-box;transform-origin:center;animation:twinkle 3s ease-in-out infinite}}
+  @keyframes twinkle{{50%{{opacity:.45;transform:scale(.85)}}}}
+  @media (prefers-reduced-motion: reduce){{.msup .sq{{animation:none}}}}
   .mprev{{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round;opacity:.7}}
   .mkey rect{{fill:var(--ink);opacity:.85}} .mkey text{{font:700 11px var(--sans);fill:var(--bg)}}
-  .msup.avail .sq,.msup.cur .sq,.msup.eaten .sq{{opacity:1}}
+  .msup.avail,.msup.cur{{opacity:1}}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
 </style>
 <div class="bar">
@@ -592,7 +636,7 @@ page = f"""<title>AI Platform Engineering</title>
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SG = document.getElementById("msnake"), BODY, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
   // Serpiente con rastro: cada movimiento agrega un tramo desde la cabeza; los desvíos quedan en el camino.
-  var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null, DIRECT = false;
+  var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null, DIRECT = false, SHRINK = 0;
   function route(a, b) {{
     if (a === b || DIRECT) return [b];
     var prev = {{}}, q = [a];
@@ -628,10 +672,10 @@ page = f"""<title>AI Platform Engineering</title>
   }}
   // Celdas ocupadas: el cuerpo (no se puede cruzar) y la comida que no es el destino; los pasos
   // ocupan 3×3 celdas. Las celdas vecinas a ambos cuestan más, para que la serpiente deje aire.
-  function obstacles(from, target, food) {{
+  function obstacles(from, target, food, cut) {{
     // Como en Snake, la cola avanza con la cabeza: cada celda del cuerpo guarda en qué paso queda
     // libre. El tramo que crece al comer (GROW) queda ocupado todo el movimiento.
-    var hard = {{}}, soft = {{}}, body = {{}}, L = bodyLen(), GROW = 24, tail = TOTAL - L;
+    var hard = {{}}, soft = {{}}, body = {{}}, L = Math.max(40, bodyLen() - (cut || 0)), GROW = 24, tail = TOTAL - L;
     function mark(x, y, r, v) {{ for (var dx = -r; dx <= r; dx++) for (var dy = -r; dy <= r; dy++) {{ var k = (x + dx) + "," + (y + dy); if (v) hard[k] = 1; else soft[k] = 1; }} }}
     for (var s = Math.max(0, tail - GROW); s < TOTAL - GS / 2; s += GS / 4) {{
       var p = BODY.getPointAtLength(s), c = cellOf([p.x, p.y]), k = c[0] + "," + c[1];
@@ -642,7 +686,7 @@ page = f"""<title>AI Platform Engineering</title>
     mark(tc[0], tc[1], 0, 1);
     if (food) Object.keys(D.nodes).forEach(function (n) {{
       if (n === target) return;
-      var c = cellOf(D.nodes[n]), big = n.charAt(0) === "a" || n === "hoy";
+      var c = cellOf(D.nodes[n]), big = n === "hoy" || /^a[0-9]/.test(n) || (n.charAt(0) === "s" && n !== "start");
       mark(c[0], c[1], big ? 1 : 0, 1); mark(c[0], c[1], big ? 2 : 1, 0);
     }});
     return {{ hard: hard, soft: soft, body: body }};
@@ -680,10 +724,16 @@ page = f"""<title>AI Platform Engineering</title>
     for (var k = tk; k; k = prev[k]) {{ var q = k.split(","); out.unshift([+q[0], +q[1]]); }}
     return out;
   }}
-  function hopPath(fromXY, n, dir, fromId) {{
+  // Si la serpiente se encerró, la cola se acorta lo justo para que quepa (SHRINK) y vuelve a crecer
+  // a medida que la cabeza avanza, sin retroceder sobre el rastro viejo.
+  function hopPath(fromXY, n, dir, fromId, commit) {{
     var a = cellOf(fromXY), b = cellOf(D.nodes[n]);
-    var cells = gridPath(a, b, dir, obstacles(fromId, n, true)) || gridPath(a, b, dir, obstacles(fromId, n, false)) ||
-      gridPath(a, b, dir, {{ hard: {{}}, soft: {{}} }}) || [a, b];
+    var cells = gridPath(a, b, dir, obstacles(fromId, n, true)) || gridPath(a, b, dir, obstacles(fromId, n, false));
+    for (var cut = GS * 2; !cells && cut <= 640; cut *= 2) {{
+      cells = gridPath(a, b, dir, obstacles(fromId, n, false, cut));
+      if (cells && commit) SHRINK += cut;
+    }}
+    cells = cells || [a, b];
     LASTEND = center(cells[cells.length - 1]);
     var d = "", pts = cells.map(center);
     for (var i = 1; i < pts.length; i++) {{
@@ -696,25 +746,30 @@ page = f"""<title>AI Platform Engineering</title>
     var path = route(STACK[STACK.length - 1].id, id), dir = NEXTDIR;
     NEXTDIR = null; DIRECT = false;
     path.forEach(function (n, k) {{
-      var top = STACK[STACK.length - 1], s = hopPath(top.xy, n, k === 0 && dir ? dir : heading(), top.id);
+      var top = STACK[STACK.length - 1], was = TOTAL, cut = SHRINK, s = hopPath(top.xy, n, k === 0 && dir ? dir : heading(), top.id, true);
       if (s) setTrail(TRD + s);
+      if (SHRINK === cut) SHRINK = Math.max(0, SHRINK - (TOTAL - was));
       STACK.push({{ key: k === path.length - 1 ? key : "v", id: n, xy: LASTEND, len: TOTAL, d: TRD }});
     }});
   }}
   function curNode() {{ return SUP ? "x" + SUP + POS[P].i : POS[P].node; }}
   // Todo desvío (seguridad, extras, preguntas) tiene un atajo al siguiente punto de la línea base.
-  function shortcut(cn) {{
-    if (!SUP && /^([ag][0-9]|start$|hoy$)/.test(cn)) return null;
+  function nextMain() {{
     for (var j = P + 1; j < POS.length; j++) if (/^(avance|glos|hoy)$/.test(POS[j].k)) return POS[j].node;
     return null;
   }}
+  function shortcut(cn) {{ return !SUP && /^([ag][0-9]|start$|hoy$)/.test(cn) ? null : nextMain(); }}
+  // Flecha que lleva al nodo n desde donde está la serpiente (para los textos de ayuda).
+  function arrowTo(n) {{ var o = options(); for (var k in o) if (o[k] === n) return DIRS[k][2]; return ""; }}
+  function arrowBack() {{ return arrowTo((D.adj[curNode()] || [])[0]); }}
   // Flechas como en Snake: cada una lleva al vecino que está en esa dirección.
   var DIRS = {{ ArrowRight: [1, 0, "→"], ArrowLeft: [-1, 0, "←"], ArrowUp: [0, -1, "↑"], ArrowDown: [0, 1, "↓"] }};
   // Reparte las flechas entre los vecinos para que todos tengan una, lo más alineada posible.
   function options() {{
     var cn = curNode(), h = D.nodes[cn], sc = shortcut(cn), ns = (D.adj[cn] || []).slice(0, sc ? 3 : 4), keys = Object.keys(DIRS), best = null, bestS = -1e9;
-    // En un desvío, → es "siguiente": la próxima parada (seguridad 2 de 2) o el atajo a la línea base.
-    var nx = sc && !SUP && POS[P + 1] && POS[P + 1].node, fwd = sc && (ns.indexOf(nx) >= 0 ? nx : sc);
+    // → es siempre "siguiente": en la línea base el próximo paso; en un desvío, la próxima parada
+    // (seguridad 2 de 2) o el atajo a la línea base.
+    var nx = sc && !SUP && POS[P + 1] && POS[P + 1].node, fwd = sc ? (ns.indexOf(nx) >= 0 ? nx : sc) : nextMain();
     function score(n, k) {{
       if (n === fwd) return k === "ArrowRight" ? 100 : -100;
       var xy = D.nodes[n], dx = xy[0] - h[0], dy = xy[1] - h[1];
@@ -746,7 +801,7 @@ page = f"""<title>AI Platform Engineering</title>
       g.appendChild(el("path", {{ "class": "mprev", d: "M" + h[0] + "," + h[1] + hopPath(h, o[k], DIRS[k], STACK[STACK.length - 1].id) }}));
     }});
     Object.keys(o).forEach(function (k) {{
-      var xy = D.nodes[o[k]], v = DIRS[k], x = xy[0] + v[0] * 22 + (v[0] ? 0 : 20), y = xy[1] + v[1] * 22 + (v[1] ? 0 : -14);
+      var xy = D.nodes[o[k]], v = DIRS[k], x = xy[0] + v[0] * 30 + (v[0] ? 0 : 26), y = xy[1] + v[1] * 30 + (v[1] ? 0 : -18);
       var t = el("g", {{ "class": "mkey" }});
       t.appendChild(el("rect", {{ x: x - 8, y: y - 8, width: 16, height: 16, rx: 3 }}));
       var tx = el("text", {{ x: x, y: y + 4, "text-anchor": "middle" }});
@@ -756,6 +811,7 @@ page = f"""<title>AI Platform Engineering</title>
   function truncate(idx) {{ STACK = STACK.slice(0, idx + 1); setTrail(STACK[idx].d); }}
   function resetTrail() {{
     var xy = POS[0].xy;
+    SHRINK = 0;
     STACK = [{{ key: "p0", id: POS[0].node, xy: xy, len: 0, d: "M" + xy[0] + "," + xy[1] }}];
     setTrail(STACK[0].d);
   }}
@@ -779,7 +835,7 @@ page = f"""<title>AI Platform Engineering</title>
     resetTrail();
   }}
   // Como en Snake: el cuerpo tiene un largo que crece con lo que come y la cola sigue a la cabeza.
-  function bodyLen() {{ return Math.min(340, 70 + 12 * Object.keys(EATEN).length); }}
+  function bodyLen() {{ return Math.max(40, Math.min(340, 70 + 12 * Object.keys(EATEN).length) - SHRINK); }}
   function wave(samp, upto, t, amp) {{
     var n = Math.min(samp.length - 1, Math.floor(upto / STEPS)), d = "";
     var i0 = Math.max(0, Math.floor((upto - bodyLen()) / STEPS));
@@ -811,7 +867,18 @@ page = f"""<title>AI Platform Engineering</title>
     var a = len > 3 ? BODY.getPointAtLength(len - 3) : pt, b = len > 3 ? pt : BODY.getPointAtLength(Math.min(TOTAL, len + 3));
     var ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     HEAD.setAttribute("transform", "translate(" + pt.x + "," + pt.y + ") rotate(" + ang + ")");
+    starsNear(pt.x, pt.y);
     if (REDUCED) drawBody(0);
+  }}
+  // Noche estrellada: las preguntas y extras brillan más cuanto más cerca pasa la serpiente.
+  var STARS = null;
+  function starsNear(x, y) {{
+    STARS = STARS || [].slice.call(document.querySelectorAll(".msup")).map(function (m) {{
+      return [m, D.nodes["x" + m.getAttribute("data-sup") + m.getAttribute("data-i")]];
+    }});
+    STARS.forEach(function (s) {{
+      s[0].style.setProperty("--near", Math.max(.1, 1 - Math.hypot(s[1][0] - x, s[1][1] - y) / 380).toFixed(2));
+    }});
   }}
   function placeFood() {{
     if (P >= LAST) {{ FOOD.style.opacity = 0; return; }}
@@ -849,10 +916,9 @@ page = f"""<title>AI Platform Engineering</title>
       m.classList.toggle("avail", !SUP && p.i === i && supAvail(k));
     }});
     var b = document.getElementById("b-sup");
-    if (SUP === "a") {{ b.hidden = false; b.textContent = "↓ volver"; }}
-    else if (SUP === "s") {{ b.hidden = false; b.textContent = "↑ volver"; }}
-    else if (supAvail("a")) {{ b.hidden = false; b.textContent = D.supa[String(p.i)].t ? "↑ extra: " + D.supa[String(p.i)].t : "↑ preguntas"; }}
-    else if (supAvail("s")) {{ b.hidden = false; b.textContent = "↓ preguntas"; }}
+    if (SUP) {{ b.hidden = false; b.textContent = arrowBack() + " volver"; }}
+    else if (supAvail("a")) {{ b.hidden = false; b.textContent = arrowTo("xa" + p.i) + (D.supa[String(p.i)].t ? " extra: " + D.supa[String(p.i)].t : " preguntas"); }}
+    else if (supAvail("s")) {{ b.hidden = false; b.textContent = arrowTo("xs" + p.i) + " preguntas"; }}
     else b.hidden = true;
     var cn = curNode();
     document.querySelectorAll(".medge").forEach(function (e) {{
@@ -1020,16 +1086,16 @@ page = f"""<title>AI Platform Engineering</title>
     var step = D.detail[String(i)];
     if (kind === "s") {{
       return '<div class="sslide supslide secsup"><header class="stitle"><span class="num">Paso ' + i + ' · Seguridad · Preguntas</span><h2>' +
-        esc((D.secnames[i] || []).join(" · ")) + '</h2><span class="when">↑ para volver</span></header>' + faqHTML(D.sups[String(i)]) + '</div>';
+        esc((D.secnames[i] || []).join(" · ")) + '</h2><span class="when">' + arrowBack() + ' para volver</span></header>' + faqHTML(D.sups[String(i)]) + '</div>';
     }}
     var x = D.supa[String(i)];
     if (!x.t) {{
       return '<div class="sslide supslide"><header class="stitle"><span class="num">Paso ' + i + ' · Preguntas</span><h2>' + esc(step.t) +
-        '</h2><span class="when">↓ para volver</span></header>' + faqHTML(x.faq) + '</div>';
+        '</h2><span class="when">' + arrowBack() + ' para volver</span></header>' + faqHTML(x.faq) + '</div>';
     }}
     var hitos = x.hitos.map(hl).join("");
     return '<div class="sslide supslide"><header class="stitle"><span class="num">Paso ' + i + ' · Extra</span><h2>' + esc(x.t) +
-      '</h2><span class="when">↓ para volver</span></header>' +
+      '</h2><span class="when">' + arrowBack() + ' para volver</span></header>' +
       '<div class="sgrid"><div class="smain"><p class="lead">' + esc(x.lead) + '</p>' +
         '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div>' +
         '<div class="asec">' + sub("Cómo aplicarlo") + howBlock(x.how, "En tu equipo") + '</div>' +
