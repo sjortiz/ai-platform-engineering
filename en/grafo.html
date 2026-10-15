@@ -252,6 +252,17 @@
   /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
   html{scrollbar-gutter:stable}
   .bar,.minibox{flex:none}
+  .stage[data-page="1"] [data-pg]:not([data-pg="1"]),.stage[data-page="2"] [data-pg]:not([data-pg="2"]),
+  .stage[data-page="3"] [data-pg]:not([data-pg="3"]){display:none !important}
+  .stage[data-page] .stitle .num::after,.stage[data-page] .hoyslide > .lbl::after{letter-spacing:.1em}
+  .stage[data-np="2"][data-page="1"] .stitle .num::after,.stage[data-np="2"][data-page="1"] .hoyslide > .lbl::after{content:"  ● ○"}
+  .stage[data-np="2"][data-page="2"] .stitle .num::after,.stage[data-np="2"][data-page="2"] .hoyslide > .lbl::after{content:"  ○ ●"}
+  .stage[data-np="3"][data-page="1"] .stitle .num::after{content:"  ● ○ ○"}
+  .stage[data-np="3"][data-page="2"] .stitle .num::after{content:"  ○ ● ○"}
+  .stage[data-np="3"][data-page="3"] .stitle .num::after{content:"  ○ ○ ●"}
+  .stage:not([data-page="1"]) .secslide .sgrid{grid-template-columns:minmax(0,1fr)}
+  .xbig{display:flex;justify-content:center;padding-top:6px}
+  .xbig .xdiag{width:min(100%,640px)}
   /* El botón de apoyo ocupa siempre el mismo ancho (aunque esté oculto): la barra no cambia de alto según la parada. */
   .bar .supbtn{width:15em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar .supbtn[hidden]{display:inline-block !important;visibility:hidden}
@@ -534,6 +545,7 @@
     .cols{grid-template-columns:minmax(0,1fr)}
   }
   .mini{max-height:185px}
+  @media (max-height: 820px){.mini{max-height:120px}}
   .minibox{position:relative;overflow:hidden;background:#0b1026;border-bottom-color:#0b1026}
   .skybg{position:absolute;inset:0;width:100%;height:100%}
   .minibox .mini{position:relative}
@@ -782,6 +794,8 @@
   }
   function drawKeys() {
     var g = document.getElementById("mkeys"), o = options(), h = STACK[STACK.length - 1].xy;
+    if (PG < NPG - 1) delete o.ArrowRight;  // → y ← pasan de página antes de mover la serpiente
+    if (PG > 0) delete o.ArrowLeft;
     while (g.firstChild) g.removeChild(g.firstChild);
     Object.keys(o).forEach(function (k) {
       g.appendChild(el("path", { "class": "mprev", d: "M" + h[0] + "," + h[1] + hopPath(h, o[k], DIRS[k], STACK[STACK.length - 1].id) }));
@@ -1029,16 +1043,16 @@
     return '<div class="sslide">' +
       '<header class="stitle"><span class="num">Step ' + i + '</span><h2>' + esc(d.t) + '</h2><span class="when">' + esc(d.when) + '</span></header>' +
       '<div class="sgrid"><div class="smain">' +
-        '<p class="lead">' + esc(d.lead) + '</p>' +
+        '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
         '<div class="asec">' + sub("In practice") + '<p class="txt">' + esc(d.ej) + '</p></div>' +
-        '<div class="asec">' + sub("What it looks like") + '<div class="seegrid"><pre class="snip">' + esc(x.ve || "") + '</pre>' + extraHTML(i) + '</div></div>' +
-        '<div class="asec">' + sub("How to apply it") + howBlock(x, "In your team") + '</div>' +
+        '<div class="asec">' + sub("What it looks like") + '<div class="seegrid"><pre class="snip">' + esc(x.ve || "") + '</pre>' + extraHTML(i) + '</div></div></div>' +
+        '<div data-pg="2"><div class="asec">' + sub("How to apply it") + howBlock(x, "In your team") + '</div>' +
         '<div class="asec">' + sub("Takeaways") + '<ul class="take">' + li(d.lleva) + '</ul></div>' +
-        '<div class="asec">' + sub("Common mistake", "warn") + '<p class="txt">' + esc(d.err) + '</p></div>' +
+        '<div class="asec">' + sub("Common mistake", "warn") + '<p class="txt">' + esc(d.err) + '</p></div></div>' +
         (secHTML || '') + '</div>' +
-        '<aside class="tl">' + (hitos ? sub("Milestones") + '<ol>' + hitos + '</ol>' : '') +
-          sub("How to know it works") + '<p class="txt muted">' + esc(d.medir.join(" ")) + '</p>' +
-          sub("The bottleneck jumps to", "crit") + '<p class="txt"><b class="nk">' + esc(d.neck) + '.</b> ' + esc(d.why) + '</p>' +
+        '<aside class="tl"><div data-pg="1">' + (hitos ? sub("Milestones") + '<ol>' + hitos + '</ol>' : '') + '</div>' +
+          '<div data-pg="2">' + sub("How to know it works") + '<p class="txt muted">' + esc(d.medir.join(" ")) + '</p>' +
+          sub("The bottleneck jumps to", "crit") + '<p class="txt"><b class="nk">' + esc(d.neck) + '.</b> ' + esc(d.why) + '</p></div>' +
         '</aside>' +
       '</div></div>';
   }
@@ -1053,12 +1067,14 @@
       var x = D.secx[s.id] || {};
       var head = esc(s.n) + ' <span class="badge b-' + s.st + '">' + s.stl + '</span>' +
         (s.rel === "habilita" ? ' <span class="relx">enables this step · explained in step 3</span>' : '');
-      if (s.rel === "habilita") return '<div class="ssec">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
+      if (s.rel === "habilita") return '<div class="ssec" data-pg="1">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
+      var ex = exHTML(D.secex[s.id]), dg = tplHTML("d-" + s.id), last = dg ? "3" : "2";
       return '<div class="ssec">' + sub(head) +
-        '<div class="ssgrid"><div><div class="mlbl">What it looks like</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + tplHTML("d-" + s.id) + '</div>' +
-        '<div>' + (x.claude ? howBlock(x, "In your agent") : '') +
-          (x.lleva ? '<div class="mlbl gap">Takeaways</div><ul class="take">' + li(x.lleva) + '</ul>' : '') +
-          (x.err ? '<div class="mlbl gap warn">Common mistake</div><p class="txt">' + esc(x.err) + '</p>' : '') +
+        '<div class="ssgrid" data-pg="1"><div><div class="mlbl">What it looks like</div><p class="txt">' + esc(x.ve || s.d) + '</p></div><div>' + ex + '</div></div>' +
+        (dg ? '<div class="xbig" data-pg="2">' + dg + '</div>' : '') +
+        '<div class="ssgrid" data-pg="' + last + '"><div>' + (x.claude ? howBlock(x, "In your agent") : '') +
+          (x.lleva ? '<div class="mlbl gap">Takeaways</div><ul class="take">' + li(x.lleva) + '</ul>' : '') + '</div>' +
+        '<div>' + (x.err ? '<div class="mlbl warn">Common mistake</div><p class="txt">' + esc(x.err) + '</p>' : '') +
           (x.medir ? '<div class="mlbl gap">How to know it works</div><p class="txt muted">' + esc(x.medir) + '</p>' : '') +
         '</div></div></div>';
     }).join("");
@@ -1071,8 +1087,8 @@
       '<header class="stitle"><span class="num">Step ' + i + ' · Security' + (p.c > 1 ? ' · ' + (p.n + 1) + ' of ' + p.c : '') + '</span><h2>' +
         esc((D.secx[p.t] && d.sec.filter(function (s) { return s.id === p.t; })[0] || {}).n || "") + '</h2>' +
         '<span class="when">arrives with: ' + esc(step.t) + '</span></header>' +
-      '<div class="sgrid"><div class="smain"><p class="lead">' + esc(d.seg) + '</p>' + sections + '</div>' +
-      '<aside class="tl">' + sub("Milestones") + aside + '</aside></div></div>';
+      '<div class="sgrid"><div class="smain"><p class="lead" data-pg="1">' + esc(d.seg) + '</p>' + sections + '</div>' +
+      '<aside class="tl" data-pg="1">' + sub("Milestones") + aside + '</aside></div></div>';
   }
   function faqHTML(list) {
     return '<div class="faq">' + list.map(function (q) { return sub(esc(q[0])) + '<p class="txt">' + esc(q[1]) + '</p>'; }).join("") + '</div>';
@@ -1091,22 +1107,56 @@
     var hitos = x.hitos.map(hl).join("");
     return '<div class="sslide supslide"><header class="stitle"><span class="num">Step ' + i + ' · Extra</span><h2>' + esc(x.t) +
       '</h2><span class="when">' + arrowBack() + ' to go back</span></header>' +
-      '<div class="sgrid"><div class="smain"><p class="lead">' + esc(x.lead) + '</p>' +
-        '<div class="asec">' + sub("What it looks like") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div>' +
-        '<div class="asec">' + sub("How to apply it") + howBlock(x.how, "In your team") + '</div>' +
+      '<div class="sgrid"><div class="smain"><div data-pg="1"><p class="lead">' + esc(x.lead) + '</p>' +
+        '<div class="asec">' + sub("What it looks like") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div></div>' +
+        '<div data-pg="2"><div class="asec">' + sub("How to apply it") + howBlock(x.how, "In your team") + '</div>' +
         '<div class="asec">' + sub("Takeaways") + '<ul class="take">' + li(x.lleva) + '</ul></div>' +
-        '<div class="asec">' + sub("Common mistake", "warn") + '<p class="txt">' + esc(x.err) + '</p></div>' +
-      '</div><aside class="tl">' + sub("Milestones") + '<ol>' + hitos + '</ol>' + sub("Questions") +
+        '<div class="asec">' + sub("Common mistake", "warn") + '<p class="txt">' + esc(x.err) + '</p></div></div>' +
+      '</div><aside class="tl"><div data-pg="1">' + sub("Milestones") + '<ol>' + hitos + '</ol></div><div data-pg="2">' + sub("Questions") +
         x.faq.map(function (q) { return '<p class="txt"><b>' + esc(q[0]) + '</b> ' + esc(q[1]) + '</p>'; }).join('<br>') +
-      '</aside></div></div>';
+      '</div></aside></div></div>';
+  }
+  // Páginas: las slides largas traen bloques data-pg="1" y data-pg="2"; se ve una página a la vez.
+  var PG = 0, NPG = 1, LANDLAST = false;
+  function pageClass(st) {
+    if (NPG > 1) { st.setAttribute("data-page", PG + 1); st.setAttribute("data-np", NPG); }
+    else { st.removeAttribute("data-page"); st.removeAttribute("data-np"); }
   }
   function showStage(html) {
     var st = document.getElementById("stage");
     clearTimeout(SWAP);
-    if (FIRST || REDUCED) { st.innerHTML = html; st.classList.remove("fading"); return; }
+    NPG = html.indexOf('data-pg="3"') >= 0 ? 3 : html.indexOf('data-pg="2"') >= 0 ? 2 : 1;
+    PG = LANDLAST ? NPG - 1 : 0; LANDLAST = false;
+    if (FIRST || REDUCED) { st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); return; }
     st.classList.add("fading");
-    SWAP = setTimeout(function () { st.innerHTML = html; st.classList.remove("fading"); updateBoard(); }, 220);
+    SWAP = setTimeout(function () { st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); updateBoard(); }, 220);
   }
+  // Si una página igual no cabe en la pantalla (proyector de 720 px, el mapa completo), se achica lo justo.
+  function fitStage() {
+    var kids = [].slice.call(document.getElementById("stage").children);
+    if (!kids.length) return;
+    kids.forEach(function (k) { k.style.zoom = ""; });
+    var top = kids[0].getBoundingClientRect().top, bottom = top;
+    kids.forEach(function (k) {
+      [k].concat([].slice.call(k.querySelectorAll("*"))).forEach(function (e) { var r = e.getBoundingClientRect(); if (r.height) bottom = Math.max(bottom, r.bottom); });
+    });
+    var avail = window.innerHeight - top - 12, need = bottom - top;
+    if (need > avail && need > 0) kids.forEach(function (k) { k.style.zoom = Math.max(.5, avail / need).toFixed(3); });
+  }
+  window.addEventListener("resize", fitStage);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitStage);
+  function turnPage(k) {
+    var st = document.getElementById("stage");
+    PG = k;
+    if (typeof drawKeys === "function") drawKeys();
+    if (REDUCED) { pageClass(st); fitStage(); return; }
+    clearTimeout(SWAP);
+    st.classList.add("fading");
+    SWAP = setTimeout(function () { pageClass(st); fitStage(); st.scrollTop = 0; st.classList.remove("fading"); }, 180);
+  }
+  // Siguiente / anterior: primero recorre las páginas de la slide y después cambia de parada.
+  function nextPage() { if (PG < NPG - 1) { turnPage(PG + 1); return true; } return false; }
+  function prevPage() { if (PG > 0) { turnPage(PG - 1); return true; } return false; }
   function enterSup(kind) {
     if (SUP || !supAvail(kind)) return;
     settle();
@@ -1139,7 +1189,10 @@
       var g = D.glos[String(p.i)];
       return '<div class="sslide glosslide"><header class="stitle"><span class="num">Before we go on</span><h2>' + esc(g.t) + '</h2>' +
         '<span class="when">vocabulary for the steps ahead</span></header><dl class="glos">' +
-        g.items.map(function (t) { return '<div><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>'; }).join("") + '</dl></div>';
+        g.items.map(function (t, k) {
+          var pg = g.items.length > 4 ? (k < Math.ceil(g.items.length / 2) ? 1 : 2) : 1;
+          return '<div data-pg="' + pg + '"><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>';
+        }).join("") + '</dl></div>';
     }
     var d = D.detail[String(p.i)];
     if (p.k === "hoy") {
@@ -1147,10 +1200,11 @@
         return '<div class="segi"><div class="h"><span class="badge b-' + s.st + '">' + s.stl + '</span>' + esc(s.n) + '</div><p>' + esc(s.d) + '</p></div>';
       }).join("");
       return '<div class="hoyslide"><div class="lbl">Today · the two tracks converge</div><h2>The bottleneck → human attention</h2>' +
-        '<p class="lead">' + esc(d.lead) + '</p>' +
-        '<div class="cols" style="margin-top:16px"><div class="take"><div class="lbl">Takeaways</div><ul>' + li(d.lleva) + '</ul></div>' +
-        '<div style="grid-column:span 2"><div class="lbl">What\'s missing, from the security track</div><div class="secitems">' + falta + '</div></div></div>' +
-        '<div class="seegrid" style="margin-top:14px"><div class="err"><div class="lbl">Common mistake</div><p>' + esc(d.err) + '</p></div>' + extraHTML(p.i) + '</div></div>';
+        '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
+        '<div class="seegrid" style="margin-top:16px"><div class="take"><div class="lbl">Takeaways</div><ul>' + li(d.lleva) + '</ul></div>' +
+        '<div class="err"><div class="lbl">Common mistake</div><p>' + esc(d.err) + '</p></div></div></div>' +
+        '<div data-pg="2"><div class="lbl">What\'s missing, from the security track</div><div class="secitems">' + falta + '</div>' +
+        '<div style="margin-top:14px">' + extraHTML(p.i) + '</div></div></div>';
     }
     return p.k === "seg" ? secSlide(p, d) : advBand(p.i, d, "");
   }
@@ -1178,8 +1232,8 @@
     else PLAN = { len: CUR };
     P = k; render();
   }
-  document.getElementById("b-prev").addEventListener("click", function () { go(P - 1); });
-  document.getElementById("b-next").addEventListener("click", function () { go(P + 1); });
+  document.getElementById("b-prev").addEventListener("click", function () { if (!prevPage()) { LANDLAST = P > 0; go(P - 1); } });
+  document.getElementById("b-next").addEventListener("click", function () { if (!nextPage()) go(P + 1); });
   document.querySelectorAll(".mdot").forEach(function (m) {
     function pick() { go(+m.getAttribute("data-p")); }
     m.addEventListener("click", pick);
@@ -1187,9 +1241,11 @@
   });
   document.addEventListener("keydown", function (ev) {
     if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup")) return;
+    if (ev.key === "ArrowRight" && nextPage()) { ev.preventDefault(); return; }
+    if (ev.key === "ArrowLeft" && prevPage()) { ev.preventDefault(); return; }
     if (DIRS[ev.key]) { ev.preventDefault(); var o = options()[ev.key]; if (o) { NEXTDIR = DIRS[ev.key]; moveTo(o); } }
-    else if (ev.key === "PageDown" || ev.key === " ") { ev.preventDefault(); go(P + 1); }
-    else if (ev.key === "PageUp") { ev.preventDefault(); go(P - 1); }
+    else if (ev.key === "PageDown" || ev.key === " ") { ev.preventDefault(); if (!nextPage()) go(P + 1); }
+    else if (ev.key === "PageUp") { ev.preventDefault(); if (!prevPage()) { LANDLAST = P > 0; go(P - 1); } }
     else if (ev.key === "Home") { go(0); } else if (ev.key === "End") { go(LAST); }
   });
   document.getElementById("b-sup").addEventListener("click", function () {

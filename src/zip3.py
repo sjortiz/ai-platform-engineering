@@ -165,6 +165,17 @@ page = f"""<title>AI Platform Engineering</title>
   /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
   html{{scrollbar-gutter:stable}}
   .bar,.minibox{{flex:none}}
+  .stage[data-page="1"] [data-pg]:not([data-pg="1"]),.stage[data-page="2"] [data-pg]:not([data-pg="2"]),
+  .stage[data-page="3"] [data-pg]:not([data-pg="3"]){{display:none !important}}
+  .stage[data-page] .stitle .num::after,.stage[data-page] .hoyslide > .lbl::after{{letter-spacing:.1em}}
+  .stage[data-np="2"][data-page="1"] .stitle .num::after,.stage[data-np="2"][data-page="1"] .hoyslide > .lbl::after{{content:"  ● ○"}}
+  .stage[data-np="2"][data-page="2"] .stitle .num::after,.stage[data-np="2"][data-page="2"] .hoyslide > .lbl::after{{content:"  ○ ●"}}
+  .stage[data-np="3"][data-page="1"] .stitle .num::after{{content:"  ● ○ ○"}}
+  .stage[data-np="3"][data-page="2"] .stitle .num::after{{content:"  ○ ● ○"}}
+  .stage[data-np="3"][data-page="3"] .stitle .num::after{{content:"  ○ ○ ●"}}
+  .stage:not([data-page="1"]) .secslide .sgrid{{grid-template-columns:minmax(0,1fr)}}
+  .xbig{{display:flex;justify-content:center;padding-top:6px}}
+  .xbig .xdiag{{width:min(100%,640px)}}
   /* El botón de apoyo ocupa siempre el mismo ancho (aunque esté oculto): la barra no cambia de alto según la parada. */
   .bar .supbtn{{width:15em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .bar .supbtn[hidden]{{display:inline-block !important;visibility:hidden}}
@@ -711,16 +722,16 @@ page = f"""<title>AI Platform Engineering</title>
     return '<div class="sslide">' +
       '<header class="stitle"><span class="num">Paso ' + i + '</span><h2>' + esc(d.t) + '</h2><span class="when">' + esc(d.when) + '</span></header>' +
       '<div class="sgrid"><div class="smain">' +
-        '<p class="lead">' + esc(d.lead) + '</p>' +
+        '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
         '<div class="asec">' + sub("En la práctica") + '<p class="txt">' + esc(d.ej) + '</p></div>' +
-        '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve || "") + '</pre>' + extraHTML(i) + '</div></div>' +
-        '<div class="asec">' + sub("Cómo aplicarlo") + howBlock(x, "En tu equipo") + '</div>' +
+        '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve || "") + '</pre>' + extraHTML(i) + '</div></div></div>' +
+        '<div data-pg="2"><div class="asec">' + sub("Cómo aplicarlo") + howBlock(x, "En tu equipo") + '</div>' +
         '<div class="asec">' + sub("Llévate esto") + '<ul class="take">' + li(d.lleva) + '</ul></div>' +
-        '<div class="asec">' + sub("Error común", "warn") + '<p class="txt">' + esc(d.err) + '</p></div>' +
+        '<div class="asec">' + sub("Error común", "warn") + '<p class="txt">' + esc(d.err) + '</p></div></div>' +
         (secHTML || '') + '</div>' +
-        '<aside class="tl">' + (hitos ? sub("Hitos") + '<ol>' + hitos + '</ol>' : '') +
-          sub("Cómo saber si funciona") + '<p class="txt muted">' + esc(d.medir.join(" ")) + '</p>' +
-          sub("El cuello salta a", "crit") + '<p class="txt"><b class="nk">' + esc(d.neck) + '.</b> ' + esc(d.why) + '</p>' +
+        '<aside class="tl"><div data-pg="1">' + (hitos ? sub("Hitos") + '<ol>' + hitos + '</ol>' : '') + '</div>' +
+          '<div data-pg="2">' + sub("Cómo saber si funciona") + '<p class="txt muted">' + esc(d.medir.join(" ")) + '</p>' +
+          sub("El cuello salta a", "crit") + '<p class="txt"><b class="nk">' + esc(d.neck) + '.</b> ' + esc(d.why) + '</p></div>' +
         '</aside>' +
       '</div></div>';
   }}
@@ -735,12 +746,14 @@ page = f"""<title>AI Platform Engineering</title>
       var x = D.secx[s.id] || {{}};
       var head = esc(s.n) + ' <span class="badge b-' + s.st + '">' + s.stl + '</span>' +
         (s.rel === "habilita" ? ' <span class="relx">habilita este paso · explicado en el paso 3</span>' : '');
-      if (s.rel === "habilita") return '<div class="ssec">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
+      if (s.rel === "habilita") return '<div class="ssec" data-pg="1">' + sub(head) + '<p class="txt">' + esc(s.d) + '</p></div>';
+      var ex = exHTML(D.secex[s.id]), dg = tplHTML("d-" + s.id), last = dg ? "3" : "2";
       return '<div class="ssec">' + sub(head) +
-        '<div class="ssgrid"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p>' + exHTML(D.secex[s.id]) + tplHTML("d-" + s.id) + '</div>' +
-        '<div>' + (x.claude ? howBlock(x, "En tu agente") : '') +
-          (x.lleva ? '<div class="mlbl gap">Llévate esto</div><ul class="take">' + li(x.lleva) + '</ul>' : '') +
-          (x.err ? '<div class="mlbl gap warn">Error común</div><p class="txt">' + esc(x.err) + '</p>' : '') +
+        '<div class="ssgrid" data-pg="1"><div><div class="mlbl">Cómo se ve</div><p class="txt">' + esc(x.ve || s.d) + '</p></div><div>' + ex + '</div></div>' +
+        (dg ? '<div class="xbig" data-pg="2">' + dg + '</div>' : '') +
+        '<div class="ssgrid" data-pg="' + last + '"><div>' + (x.claude ? howBlock(x, "En tu agente") : '') +
+          (x.lleva ? '<div class="mlbl gap">Llévate esto</div><ul class="take">' + li(x.lleva) + '</ul>' : '') + '</div>' +
+        '<div>' + (x.err ? '<div class="mlbl warn">Error común</div><p class="txt">' + esc(x.err) + '</p>' : '') +
           (x.medir ? '<div class="mlbl gap">Cómo saber si funciona</div><p class="txt muted">' + esc(x.medir) + '</p>' : '') +
         '</div></div></div>';
     }}).join("");
@@ -753,8 +766,8 @@ page = f"""<title>AI Platform Engineering</title>
       '<header class="stitle"><span class="num">Paso ' + i + ' · Seguridad' + (p.c > 1 ? ' · ' + (p.n + 1) + ' de ' + p.c : '') + '</span><h2>' +
         esc((D.secx[p.t] && d.sec.filter(function (s) {{ return s.id === p.t; }})[0] || {{}}).n || "") + '</h2>' +
         '<span class="when">llega con: ' + esc(step.t) + '</span></header>' +
-      '<div class="sgrid"><div class="smain"><p class="lead">' + esc(d.seg) + '</p>' + sections + '</div>' +
-      '<aside class="tl">' + sub("Hitos") + aside + '</aside></div></div>';
+      '<div class="sgrid"><div class="smain"><p class="lead" data-pg="1">' + esc(d.seg) + '</p>' + sections + '</div>' +
+      '<aside class="tl" data-pg="1">' + sub("Hitos") + aside + '</aside></div></div>';
   }}
   function faqHTML(list) {{
     return '<div class="faq">' + list.map(function (q) {{ return sub(esc(q[0])) + '<p class="txt">' + esc(q[1]) + '</p>'; }}).join("") + '</div>';
@@ -773,22 +786,56 @@ page = f"""<title>AI Platform Engineering</title>
     var hitos = x.hitos.map(hl).join("");
     return '<div class="sslide supslide"><header class="stitle"><span class="num">Paso ' + i + ' · Extra</span><h2>' + esc(x.t) +
       '</h2><span class="when">↓ para volver</span></header>' +
-      '<div class="sgrid"><div class="smain"><p class="lead">' + esc(x.lead) + '</p>' +
-        '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div>' +
-        '<div class="asec">' + sub("Cómo aplicarlo") + howBlock(x.how, "En tu equipo") + '</div>' +
+      '<div class="sgrid"><div class="smain"><div data-pg="1"><p class="lead">' + esc(x.lead) + '</p>' +
+        '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div></div>' +
+        '<div data-pg="2"><div class="asec">' + sub("Cómo aplicarlo") + howBlock(x.how, "En tu equipo") + '</div>' +
         '<div class="asec">' + sub("Llévate esto") + '<ul class="take">' + li(x.lleva) + '</ul></div>' +
-        '<div class="asec">' + sub("Error común", "warn") + '<p class="txt">' + esc(x.err) + '</p></div>' +
-      '</div><aside class="tl">' + sub("Hitos") + '<ol>' + hitos + '</ol>' + sub("Preguntas") +
+        '<div class="asec">' + sub("Error común", "warn") + '<p class="txt">' + esc(x.err) + '</p></div></div>' +
+      '</div><aside class="tl"><div data-pg="1">' + sub("Hitos") + '<ol>' + hitos + '</ol></div><div data-pg="2">' + sub("Preguntas") +
         x.faq.map(function (q) {{ return '<p class="txt"><b>' + esc(q[0]) + '</b> ' + esc(q[1]) + '</p>'; }}).join('<br>') +
-      '</aside></div></div>';
+      '</div></aside></div></div>';
+  }}
+  // Páginas: las slides largas traen bloques data-pg="1" y data-pg="2"; se ve una página a la vez.
+  var PG = 0, NPG = 1, LANDLAST = false;
+  function pageClass(st) {{
+    if (NPG > 1) {{ st.setAttribute("data-page", PG + 1); st.setAttribute("data-np", NPG); }}
+    else {{ st.removeAttribute("data-page"); st.removeAttribute("data-np"); }}
   }}
   function showStage(html) {{
     var st = document.getElementById("stage");
     clearTimeout(SWAP);
-    if (FIRST || REDUCED) {{ st.innerHTML = html; st.classList.remove("fading"); return; }}
+    NPG = html.indexOf('data-pg="3"') >= 0 ? 3 : html.indexOf('data-pg="2"') >= 0 ? 2 : 1;
+    PG = LANDLAST ? NPG - 1 : 0; LANDLAST = false;
+    if (FIRST || REDUCED) {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); return; }}
     st.classList.add("fading");
-    SWAP = setTimeout(function () {{ st.innerHTML = html; st.classList.remove("fading"); updateBoard(); }}, 220);
+    SWAP = setTimeout(function () {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); updateBoard(); }}, 220);
   }}
+  // Si una página igual no cabe en la pantalla (proyector de 720 px, el mapa completo), se achica lo justo.
+  function fitStage() {{
+    var kids = [].slice.call(document.getElementById("stage").children);
+    if (!kids.length) return;
+    kids.forEach(function (k) {{ k.style.zoom = ""; }});
+    var top = kids[0].getBoundingClientRect().top, bottom = top;
+    kids.forEach(function (k) {{
+      [k].concat([].slice.call(k.querySelectorAll("*"))).forEach(function (e) {{ var r = e.getBoundingClientRect(); if (r.height) bottom = Math.max(bottom, r.bottom); }});
+    }});
+    var avail = window.innerHeight - top - 12, need = bottom - top;
+    if (need > avail && need > 0) kids.forEach(function (k) {{ k.style.zoom = Math.max(.5, avail / need).toFixed(3); }});
+  }}
+  window.addEventListener("resize", fitStage);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitStage);
+  function turnPage(k) {{
+    var st = document.getElementById("stage");
+    PG = k;
+    if (typeof drawKeys === "function") drawKeys();
+    if (REDUCED) {{ pageClass(st); fitStage(); return; }}
+    clearTimeout(SWAP);
+    st.classList.add("fading");
+    SWAP = setTimeout(function () {{ pageClass(st); fitStage(); st.scrollTop = 0; st.classList.remove("fading"); }}, 180);
+  }}
+  // Siguiente / anterior: primero recorre las páginas de la slide y después cambia de parada.
+  function nextPage() {{ if (PG < NPG - 1) {{ turnPage(PG + 1); return true; }} return false; }}
+  function prevPage() {{ if (PG > 0) {{ turnPage(PG - 1); return true; }} return false; }}
   function enterSup(kind) {{
     if (SUP || !supAvail(kind)) return;
     settle();
@@ -821,7 +868,10 @@ page = f"""<title>AI Platform Engineering</title>
       var g = D.glos[String(p.i)];
       return '<div class="sslide glosslide"><header class="stitle"><span class="num">Antes de seguir</span><h2>' + esc(g.t) + '</h2>' +
         '<span class="when">vocabulario para los pasos que siguen</span></header><dl class="glos">' +
-        g.items.map(function (t) {{ return '<div><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>'; }}).join("") + '</dl></div>';
+        g.items.map(function (t, k) {{
+          var pg = g.items.length > 4 ? (k < Math.ceil(g.items.length / 2) ? 1 : 2) : 1;
+          return '<div data-pg="' + pg + '"><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>';
+        }}).join("") + '</dl></div>';
     }}
     var d = D.detail[String(p.i)];
     if (p.k === "hoy") {{
@@ -829,10 +879,11 @@ page = f"""<title>AI Platform Engineering</title>
         return '<div class="segi"><div class="h"><span class="badge b-' + s.st + '">' + s.stl + '</span>' + esc(s.n) + '</div><p>' + esc(s.d) + '</p></div>';
       }}).join("");
       return '<div class="hoyslide"><div class="lbl">Hoy · las dos líneas se juntan</div><h2>El cuello → atención humana</h2>' +
-        '<p class="lead">' + esc(d.lead) + '</p>' +
-        '<div class="cols" style="margin-top:16px"><div class="take"><div class="lbl">Llévate esto</div><ul>' + li(d.lleva) + '</ul></div>' +
-        '<div style="grid-column:span 2"><div class="lbl">Lo que falta, desde la pista de seguridad</div><div class="secitems">' + falta + '</div></div></div>' +
-        '<div class="seegrid" style="margin-top:14px"><div class="err"><div class="lbl">Error común</div><p>' + esc(d.err) + '</p></div>' + extraHTML(p.i) + '</div></div>';
+        '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
+        '<div class="seegrid" style="margin-top:16px"><div class="take"><div class="lbl">Llévate esto</div><ul>' + li(d.lleva) + '</ul></div>' +
+        '<div class="err"><div class="lbl">Error común</div><p>' + esc(d.err) + '</p></div></div></div>' +
+        '<div data-pg="2"><div class="lbl">Lo que falta, desde la pista de seguridad</div><div class="secitems">' + falta + '</div>' +
+        '<div style="margin-top:14px">' + extraHTML(p.i) + '</div></div></div>';
     }}
     return p.k === "seg" ? secSlide(p, d) : advBand(p.i, d, "");
   }}
@@ -864,8 +915,8 @@ page = f"""<title>AI Platform Engineering</title>
     }} else PLAN = {{ len: CUR }};
     P = k; render();
   }}
-  document.getElementById("b-prev").addEventListener("click", function () {{ go(P - 1); }});
-  document.getElementById("b-next").addEventListener("click", function () {{ go(P + 1); }});
+  document.getElementById("b-prev").addEventListener("click", function () {{ if (!prevPage()) {{ LANDLAST = P > 0; go(P - 1); }} }});
+  document.getElementById("b-next").addEventListener("click", function () {{ if (!nextPage()) go(P + 1); }});
   document.querySelectorAll(".mdot").forEach(function (m) {{
     function pick() {{ go(+m.getAttribute("data-p")); }}
     m.addEventListener("click", pick);
@@ -873,8 +924,8 @@ page = f"""<title>AI Platform Engineering</title>
   }});
   document.addEventListener("keydown", function (ev) {{
     if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup")) return;
-    if (ev.key === "ArrowRight" || ev.key === "PageDown" || ev.key === " ") {{ ev.preventDefault(); go(P + 1); }}
-    else if (ev.key === "ArrowLeft" || ev.key === "PageUp") {{ ev.preventDefault(); go(P - 1); }}
+    if (ev.key === "ArrowRight" || ev.key === "PageDown" || ev.key === " ") {{ ev.preventDefault(); if (!nextPage()) go(P + 1); }}
+    else if (ev.key === "ArrowLeft" || ev.key === "PageUp") {{ ev.preventDefault(); if (!prevPage()) {{ LANDLAST = P > 0; go(P - 1); }} }}
     else if (ev.key === "Home") {{ go(0); }} else if (ev.key === "End") {{ go(LAST); }}
     else if (ev.key === "ArrowUp") {{ ev.preventDefault(); if (SUP === "s") leaveSup(); else enterSup("a"); }}
     else if (ev.key === "ArrowDown") {{ ev.preventDefault(); if (SUP === "a") leaveSup(); else enterSup("s"); }}

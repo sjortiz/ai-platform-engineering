@@ -1167,5 +1167,14 @@
  " para volver</span></header>": " to go back</span></header>",
  " preguntas": " questions",
  " volver": " back",
- "--near": "--near"
+ "--near": "--near",
+ "<div class=\"mlbl warn\">Error común</div><p class=\"txt\">": "<div class=\"mlbl warn\">Common mistake</div><p class=\"txt\">",
+ "<div class=\"ssgrid\" data-pg=\"1\"><div><div class=\"mlbl\">Cómo se ve</div><p class=\"txt\">": "<div class=\"ssgrid\" data-pg=\"1\"><div><div class=\"mlbl\">What it looks like</div><p class=\"txt\">",
+ "data-pg=\"2\"": "data-pg=\"2\"",
+ "<div class=\"err\"><div class=\"lbl\">Error común</div><p>": "<div class=\"err\"><div class=\"lbl\">Common mistake</div><p>",
+ "<div class=\"seegrid\" style=\"margin-top:16px\"><div class=\"take\"><div class=\"lbl\">Llévate esto</div><ul>": "<div class=\"seegrid\" style=\"margin-top:16px\"><div class=\"take\"><div class=\"lbl\">Takeaways</div><ul>",
+ "<div class=\"ssgrid\" data-pg=\"": "<div class=\"ssgrid\" data-pg=\"",
+ "<div data-pg=\"": "<div data-pg=\"",
+ "<div data-pg=\"2\"><div class=\"lbl\">Lo que falta, desde la pista de seguridad</div><div class=\"secitems\">": "<div data-pg=\"2\"><div class=\"lbl\">What's missing, from the security track</div><div class=\"secitems\">",
+ "data-pg=\"3\"": "data-pg=\"3\""
 }
