@@ -314,6 +314,8 @@ page = f"""<title>AI Platform Engineering</title>
   html,body{{height:100%}}
   /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
   html{{scrollbar-gutter:stable}}
+  /* Móvil: dos toques rápidos en ▶ avanzan dos veces en vez de hacer zoom (el zoom con dos dedos sigue). */
+  html{{touch-action:manipulation;-webkit-tap-highlight-color:transparent}}
   .bar,.minibox{{flex:none}}
   .stage[data-page="1"] [data-pg]:not([data-pg="1"]),.stage[data-page="2"] [data-pg]:not([data-pg="2"]),
   .stage[data-page="3"] [data-pg]:not([data-pg="3"]){{display:none !important}}
@@ -672,9 +674,9 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .ttl > span{{font-size:.68rem;margin-right:0}}
     .bar .mode{{margin-left:0}}
     .bar .mode a,.bar .mode span{{padding:7px 11px}}
-    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
+    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:64px minmax(0,1fr) 64px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
       box-shadow:0 -2px 12px rgb(0 0 0 / .08);padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}}
-    .nav button{{min-width:46px;min-height:44px;font-size:1rem}}
+    .nav button{{min-width:64px;min-height:52px;font-size:1.15rem;touch-action:manipulation;user-select:none;-webkit-user-select:none}}
     .pos{{width:auto;min-width:0;font-size:.72rem}}
     .score{{display:none}}
     .bar .supbtn{{position:absolute;right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(100% + 8px);width:auto;max-width:60vw;min-height:40px;

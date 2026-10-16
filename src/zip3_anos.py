@@ -94,7 +94,7 @@ def wavy(y0, amp):
 def ammonite(x, y, r):
     d = " ".join(f"{'M' if k == 0 else 'L'}{x + math.cos(t) * r * t / 12:.1f},{y + math.sin(t) * r * t / 12:.1f}"
                  for k, t in enumerate([j * .3 for j in range(41)]))
-    return f'<path class="fossil" d="{d}"/>'
+    return f'<path class="fossil spin" d="{d}" style="animation-delay:-{DIG.uniform(0, 60):.1f}s"/>'
 
 
 def bone(x, y, s, a):
@@ -110,8 +110,11 @@ DIG_SVG = (f'<svg class="skybg digbg" viewBox="0 0 {DW} {DH}" preserveAspectRati
                      f'ry="{DIG.uniform(1, 3.5):.1f}" opacity="{DIG.uniform(.15, .45):.2f}"/>' for _ in range(340))
            + "".join(ammonite(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(10, 18)) for _ in range(14))
            + "".join(bone(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(.7, 1.2), DIG.uniform(0, 180)) for _ in range(10))
-           + "".join(f'<circle class="mote" cx="{DIG.uniform(0, DW):.0f}" cy="{DIG.uniform(10, DH - 10):.0f}" r="{DIG.uniform(1.2, 2.6):.1f}" '
+           + "".join(f'<circle class="mote" cx="{DIG.uniform(0, DW):.0f}" cy="{DIG.uniform(10, DH - 10):.0f}" r="{DIG.uniform(2, 4.2):.1f}" '
                      f'style="animation-duration:{DIG.uniform(7, 14):.1f}s;animation-delay:-{DIG.uniform(0, 14):.1f}s"/>' for _ in range(90))
+           + '<defs><radialGradient id="haze"><stop offset="0" stop-color="#fffaf0" stop-opacity=".55"/><stop offset="1" stop-color="#fffaf0" stop-opacity="0"/></radialGradient></defs>'
+           + "".join(f'<ellipse class="haze" cx="{DIG.uniform(0, DW):.0f}" cy="{DIG.uniform(40, DH - 40):.0f}" rx="{DIG.uniform(220, 360):.0f}" ry="{DIG.uniform(50, 80):.0f}" '
+                     f'fill="url(#haze)" style="animation-duration:{DIG.uniform(18, 30):.0f}s;animation-delay:-{DIG.uniform(0, 30):.0f}s"/>' for _ in range(9))
            + "</svg>")
 
 NCAP = len(P2.CAPS)
@@ -304,6 +307,8 @@ page = f"""<title>AI Platform Engineering</title>
   html,body{{height:100%}}
   /* La barra y el minimapa no se encogen cuando la slide es larga, y la barra de scroll no cambia el ancho. */
   html{{scrollbar-gutter:stable}}
+  /* Móvil: dos toques rápidos en ▶ avanzan dos veces en vez de hacer zoom (el zoom con dos dedos sigue). */
+  html{{touch-action:manipulation;-webkit-tap-highlight-color:transparent}}
   .bar,.minibox{{flex:none}}
   .stage[data-page="1"] [data-pg]:not([data-pg="1"]),.stage[data-page="2"] [data-pg]:not([data-pg="2"]),
   .stage[data-page="3"] [data-pg]:not([data-pg="3"]){{display:none !important}}
@@ -656,8 +661,13 @@ page = f"""<title>AI Platform Engineering</title>
   @keyframes wave{{50%{{transform:skewY(-6deg) scaleX(.92)}}}}
   /* Movimiento: polvo que flota, fragmentos que brillan y se desentierran cuando la serpiente pasa cerca,
      rastro de arena, la unión aparece → uso real que camina y el capítulo actual que late. */
-  .digbg .mote{{fill:#fffaf0;opacity:.6;animation:drift 10s ease-in-out infinite alternate}}
-  @keyframes drift{{0%{{transform:translate(0,0)}}50%{{transform:translate(26px,-9px)}}100%{{transform:translate(52px,3px)}}}}
+  .digbg .mote{{fill:#fffaf0;opacity:.85;animation:drift 10s ease-in-out infinite alternate}}
+  .digbg .mote:nth-of-type(3n){{fill:#8a6a44;opacity:.55}}
+  @keyframes drift{{0%{{transform:translate(0,0)}}50%{{transform:translate(70px,-16px)}}100%{{transform:translate(140px,6px)}}}}
+  .digbg .haze{{animation:haze 24s ease-in-out infinite alternate}}
+  @keyframes haze{{to{{transform:translateX(320px)}}}}
+  .digbg .spin{{transform-box:fill-box;transform-origin:center;animation:spin 60s linear infinite}}
+  @keyframes spin{{to{{transform:rotate(360deg)}}}}
   .msup{{opacity:var(--near,.6);transition:opacity .25s}}
   .msup.avail,.msup.cur{{opacity:1}}
   .msup .sq{{transform-box:fill-box;transform-origin:center;animation:glint 3.2s ease-in-out infinite}}
@@ -668,7 +678,7 @@ page = f"""<title>AI Platform Engineering</title>
   @keyframes ants{{to{{stroke-dashoffset:-14}}}}
   .tlcap.cur .tlseg{{animation:beat 2s ease-in-out infinite}}
   @keyframes beat{{50%{{stroke-opacity:.45}}}}
-  @media (prefers-reduced-motion: reduce){{.mini .pin .cloth,.digbg .mote,.msup .sq,.snake-dust,.mdot.cur .ghost .gl,.tlcap.cur .tlseg{{animation:none}}}}
+  @media (prefers-reduced-motion: reduce){{.mini .pin .cloth,.digbg .mote,.digbg .haze,.digbg .spin,.msup .sq,.snake-dust,.mdot.cur .ghost .gl,.tlcap.cur .tlseg{{animation:none}}}}
   .msup .sq{{fill:#fff7e6;stroke:#a16207;stroke-width:1.6;stroke-linejoin:round}}
   .msup[data-sup="s"] .sq{{fill:#fde68a;stroke:#b45309}}
   .msup.big .sq{{stroke:#9a3412;stroke-width:2.2}}
@@ -677,8 +687,6 @@ page = f"""<title>AI Platform Engineering</title>
   .mdot.glos .gd{{fill:#f8ecd2;stroke:#7c2d12}}
   .mdot.hoy rect{{fill:#f8ecd2;stroke:#9a3412}} .mdot.hoy text{{fill:#9a3412}}
   .mdot.hoy.done rect{{fill:#c2410c}} .mdot.hoy.done text{{fill:#fff7e6}}
-  .snake-body{{stroke:#5b3a1e}}
-  .snake-head{{fill:#5b3a1e}} .snake-eye{{fill:#fde68a}}
   .stitle .when .wa::before,.stitle .when .wu::before{{content:"";display:inline-block;width:.62em;height:.8em;border-radius:2px;margin-right:.4em;vertical-align:-.05em}}
   .stitle .when .wa::before{{border:1.5px dashed currentColor}}
   .stitle .when .wu::before{{background:var(--accent)}}
@@ -692,9 +700,9 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .ttl > span{{font-size:.68rem;margin-right:0}}
     .bar .mode{{margin-left:0}}
     .bar .mode a,.bar .mode span{{padding:7px 11px}}
-    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
+    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:64px minmax(0,1fr) 64px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
       box-shadow:0 -2px 12px rgb(0 0 0 / .08);padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}}
-    .nav button{{min-width:46px;min-height:44px;font-size:1rem}}
+    .nav button{{min-width:64px;min-height:52px;font-size:1.15rem;touch-action:manipulation;user-select:none;-webkit-user-select:none}}
     .pos{{width:auto;min-width:0;font-size:.72rem}}
     .score{{display:none}}
     .bar .supbtn{{position:absolute;right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(100% + 8px);width:auto;max-width:60vw;min-height:40px;
