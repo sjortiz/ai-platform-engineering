@@ -693,7 +693,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="./">Por pasos</a><a href="por-anos.html">Por años</a><span aria-current="page">Espacio</span></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="por-anos.html">Por años</a><span aria-current="page">Espacio</span></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>

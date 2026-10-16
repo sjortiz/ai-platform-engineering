@@ -1100,9 +1100,8 @@
  "<button type=\"button\" class=\"chip\" data-go=\"": "<button type=\"button\" class=\"chip\" data-go=\"",
  "[data-go]": "[data-go]",
  ".mdot,.msup": ".mdot,.msup",
- "<span aria-current=\"page\">Por pasos</span><a href=\"por-anos.html\">Por años</a><a href=\"espacio.html\">Espacio</a>": "<span aria-current=\"page\">By step</span><a href=\"por-anos.html\">By year</a><a href=\"espacio.html\">Space</a>",
- "<a href=\"./\">Por pasos</a><span aria-current=\"page\">Por años</span><a href=\"espacio.html\">Espacio</a>": "<a href=\"./\">By step</a><span aria-current=\"page\">By year</span><a href=\"espacio.html\">Space</a>",
- "<a href=\"./\">Por pasos</a><a href=\"por-anos.html\">Por años</a><span aria-current=\"page\">Espacio</span>": "<a href=\"./\">By step</a><a href=\"por-anos.html\">By year</a><span aria-current=\"page\">Space</span>",
+ "<span aria-current=\"page\">Por años</span><a href=\"espacio.html\">Espacio</a>": "<span aria-current=\"page\">By year</span><a href=\"espacio.html\">Space</a>",
+ "<a href=\"por-anos.html\">Por años</a><span aria-current=\"page\">Espacio</span>": "<a href=\"por-anos.html\">By year</a><span aria-current=\"page\">Space</span>",
  ".medge": ".medge",
  "Porque lo que llega a producción no sería lo que se probó en QA: basta otra versión de una dependencia para cambiar el resultado. Construye una vez, guarda el artefacto (la imagen con su digest, el paquete con su versión) y promuévelo entre ambientes. Lo único que cambia es la configuración, que se inyecta al desplegar.": "Because what reaches production wouldn't be what was tested in QA: a different version of one dependency is enough to change the result. Build once, store the artifact (the image with its digest, the package with its version) and promote it between environments. The only thing that changes is configuration, injected at deploy time.",
  "En el ambiente de la plataforma (Environments de GitHub o Azure DevOps), no en el YAML: así nadie las quita con un PR. Ahí defines quién aprueba, desde qué ramas se puede desplegar y cuánto esperar; el pipeline solo declara a qué ambiente va.": "In the platform's environment (GitHub or Azure DevOps Environments), not in the YAML: that way nobody removes them with a PR. That's where you define who approves, which branches can deploy and any wait timer; the pipeline only declares which environment it targets.",
@@ -1176,5 +1175,8 @@
  "<div class=\"ssgrid\" data-pg=\"": "<div class=\"ssgrid\" data-pg=\"",
  "<div data-pg=\"": "<div data-pg=\"",
  "<div data-pg=\"2\"><div class=\"lbl\">Lo que falta, desde la pista de seguridad</div><div class=\"secitems\">": "<div data-pg=\"2\"><div class=\"lbl\">What's missing, from the security track</div><div class=\"secitems\">",
- "data-pg=\"3\"": "data-pg=\"3\""
+ "data-pg=\"3\"": "data-pg=\"3\"",
+ ".amap-wrap,pre,.snip": ".amap-wrap,pre,.snip",
+ ".mdot.cur, .msup.cur": ".mdot.cur, .msup.cur",
+ ".minibox": ".minibox"
 }

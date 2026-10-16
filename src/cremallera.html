@@ -1,0 +1,450 @@
+<title>El cuello se mueve</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+
+  /* Layout: single reading column; vertical pipeline diagrams per environment; status-coded finding cards.
+     Same visual system as the 2026-10-12 report so both read as one series. */
+  :root{
+    --bg:#ffffff; --panel:#f5f7fa; --panel-2:#eef1f6; --inset:#e9edf3;
+    --line:#e2e6ee; --line-2:#d3d9e3;
+    --ink:#16202c; --muted:#56626f; --faint:#8894a2;
+    --accent:#1668a3; --accent-soft:#e7f0f8;
+    --crit:#c0392b; --crit-bg:#fbecea; --crit-line:#eac6c1;
+    --high:#c2410c; --high-bg:#fcefe7; --high-line:#efcdba;
+    --med:#9a6b00; --med-bg:#fbf3dd; --med-line:#ecd9a8;
+    --low:#5b6b7c; --low-bg:#eef1f5; --low-line:#d9dfe7;
+    --ok:#0f766e; --ok-bg:#e6f4f1; --ok-line:#bfe2dc;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    --display:"Fraunces","Inter",Georgia,serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0e1319; --panel:#161d26; --panel-2:#1b232e; --inset:#10161d;
+    --line:#26303c; --line-2:#323e4c;
+    --ink:#e7ecf2; --muted:#9aa6b4; --faint:#6a7685;
+    --accent:#52a7db; --accent-soft:#122634;
+    --crit:#f0837a; --crit-bg:#2a1512; --crit-line:#5a2822;
+    --high:#f0a46b; --high-bg:#271609; --high-line:#5a3317;
+    --med:#e3bd63; --med-bg:#241d08; --med-line:#4e3f14;
+    --low:#9fb0c1; --low-bg:#171d24; --low-line:#2c3744;
+    --ok:#56c7b8; --ok-bg:#0d201d; --ok-line:#1d4a43;
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0e1319; --panel:#161d26; --panel-2:#1b232e; --inset:#10161d;
+    --line:#26303c; --line-2:#323e4c;
+    --ink:#e7ecf2; --muted:#9aa6b4; --faint:#6a7685;
+    --accent:#52a7db; --accent-soft:#122634;
+    --crit:#f0837a; --crit-bg:#2a1512; --crit-line:#5a2822;
+    --high:#f0a46b; --high-bg:#271609; --high-line:#5a3317;
+    --med:#e3bd63; --med-bg:#241d08; --med-line:#4e3f14;
+    --low:#9fb0c1; --low-bg:#171d24; --low-line:#2c3744;
+    --ok:#56c7b8; --ok-bg:#0d201d; --ok-line:#1d4a43;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;
+    -webkit-font-smoothing:antialiased;font-size:15px}
+  .wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:0}
+  a{color:var(--accent)}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+  h1,h2,h3{text-wrap:balance;line-height:1.2}
+
+  header.masthead{border-bottom:1px solid var(--line);padding-block:34px 26px}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+    font-weight:600;margin:0 0 10px}
+  h1{font-family:var(--display);font-weight:600;font-size:2.35rem;margin:0 0 .4rem;letter-spacing:-.01em}
+  .lede{color:var(--muted);font-size:1.05rem;margin:0;max-width:62ch}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:20px;font-size:.82rem;color:var(--faint)}
+  .meta b{color:var(--muted);font-weight:600}
+
+  section{padding-block:30px;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin:0 0 18px}
+  .sec-num{font-family:var(--display);font-size:1.1rem;color:var(--accent);font-weight:600;
+    font-variant-numeric:tabular-nums}
+  h2{font-size:1.4rem;font-weight:650;margin:0}
+  h3{font-size:1.02rem;font-weight:650;margin:22px 0 10px}
+  p{margin:0 0 14px;max-width:70ch}
+  .muted{color:var(--muted)}
+
+  /* environment progress tiles */
+  .envs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+  .env{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;
+    border-top:3px solid var(--s,var(--line-2));min-width:0}
+  .env.done{--s:var(--ok)} .env.ready{--s:var(--accent)} .env.hold{--s:var(--med)}
+  .env .name{font-weight:700;font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .env .state{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--s)}
+  .env ul{margin:8px 0 0;padding:0;list-style:none;font-size:.82rem;color:var(--muted)}
+  .env li{padding:3px 0 3px 18px;position:relative}
+  .env li::before{position:absolute;left:0;top:3px;font-family:var(--mono);font-weight:600}
+  .env li.y::before{content:"✓";color:var(--ok)}
+  .env li.p::before{content:"○";color:var(--accent)}
+  .env li.n::before{content:"–";color:var(--faint)}
+
+  /* pipeline diagram */
+  .diagram{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:22px 18px;margin:8px 0 6px;overflow-x:auto}
+  .dtitle{font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);
+    margin:0 0 16px;font-weight:600}
+  .flow{display:flex;flex-direction:column;align-items:stretch;min-width:300px}
+  .node{border:1px solid var(--line-2);background:var(--bg);border-radius:9px;padding:11px 14px;position:relative}
+  .node .t{font-weight:600;font-size:.92rem;padding-right:78px}
+  .node .s{font-size:.78rem;color:var(--muted);margin-top:2px}
+  .node .s code{color:var(--muted)}
+  .node .tag{position:absolute;top:10px;right:12px;font-size:.66rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:20px}
+  .tag.pub{background:var(--crit-bg);color:var(--crit);border:1px solid var(--crit-line)}
+  .tag.int{background:var(--ok-bg);color:var(--ok);border:1px solid transparent}
+  .tag.aws{background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+  .tag.ext{background:var(--med-bg);color:var(--med);border:1px solid var(--med-line)}
+  .node.new{border-color:var(--ok-line);box-shadow:inset 0 0 0 1px var(--ok-line)}
+  .node.exposed{border-color:var(--crit-line);box-shadow:inset 0 0 0 1px var(--crit-line)}
+  .node.dead{border-style:dashed;opacity:.8}
+  .node.dead .t{color:var(--faint)}
+  .conn{height:22px;width:2px;background:var(--line-2);margin:0 auto;position:relative}
+  .conn::after{content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    border:5px solid transparent;border-top-color:var(--line-2);border-bottom:0}
+  .conn .lbl{position:absolute;left:10px;top:50%;transform:translateY(-50%);white-space:nowrap;
+    font-size:.7rem;color:var(--faint);font-family:var(--mono)}
+  .conn.good{background:var(--ok)} .conn.good::after{border-top-color:var(--ok)} .conn.good .lbl{color:var(--ok)}
+  .branch{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .branch .col{display:flex;flex-direction:column;min-width:0}
+  .merge{text-align:center;font-size:.72rem;color:var(--faint);font-family:var(--mono);margin:4px 0}
+  .retired{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+  .retired .node{flex:1;min-width:140px}
+
+  .callout{display:flex;gap:12px;align-items:flex-start;background:var(--cb,var(--crit-bg));
+    border:1px solid var(--cl,var(--crit-line));border-radius:10px;padding:12px 14px;margin:12px 0}
+  .callout .ic{color:var(--cc,var(--crit));font-weight:700;font-family:var(--mono);flex:none;line-height:1.3}
+  .callout .bd{font-size:.88rem;min-width:0}
+  .callout .bd b{color:var(--cc,var(--crit))}
+  .callout.info{--cb:var(--accent-soft);--cl:var(--line-2);--cc:var(--accent)}
+  .callout.warn{--cb:var(--med-bg);--cl:var(--med-line);--cc:var(--med)}
+  .callout.ok{--cb:var(--ok-bg);--cl:var(--ok-line);--cc:var(--ok)}
+
+  /* findings */
+  .finding{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--sv,var(--line-2));
+    border-radius:0 10px 10px 0;padding:16px 18px;margin-bottom:14px}
+  .finding.sv-crit{--sv:var(--crit)} .finding.sv-high{--sv:var(--high)}
+  .finding.sv-med{--sv:var(--med)} .finding.sv-low{--sv:var(--low)}
+  .fhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:8px}
+  .fid{font-family:var(--mono);font-size:.78rem;color:var(--faint);font-weight:600}
+  .ftitle{font-weight:650;font-size:1.05rem;flex:1 1 55%;min-width:0}
+  .badge{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .b-crit{background:var(--crit-bg);color:var(--crit);border:1px solid var(--crit-line)}
+  .b-high{background:var(--high-bg);color:var(--high);border:1px solid var(--high-line)}
+  .b-med{background:var(--med-bg);color:var(--med);border:1px solid var(--med-line)}
+  .b-low{background:var(--low-bg);color:var(--low);border:1px solid var(--low-line)}
+  .b-new{background:var(--accent);color:var(--bg);border:1px solid var(--accent)}
+  .finding p{font-size:.92rem;margin:0 0 10px}
+  .ev{font-size:.82rem;color:var(--muted);border-top:1px dashed var(--line-2);padding-top:9px;margin-top:4px}
+  .ev b{color:var(--ink);font-weight:600}
+
+  /* status table */
+  .tbl-wrap{overflow-x:auto;margin:6px 0 4px;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.86rem}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--panel-2);font-weight:600;font-size:.74rem;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--muted)}
+  tr:last-child td{border-bottom:0}
+  td code{color:var(--muted)}
+  td.id{font-family:var(--mono);font-size:.8rem;color:var(--faint);white-space:nowrap}
+  .st{font-weight:600;font-size:.78rem;white-space:nowrap}
+  .st.bad{color:var(--crit)} .st.ok{color:var(--ok)} .st.warn{color:var(--med)} .st.go{color:var(--accent)}
+
+  /* roadmap */
+  ol.road{list-style:none;counter-reset:r;padding:0;margin:8px 0 0}
+  ol.road li{counter-increment:r;position:relative;padding:12px 0 12px 46px;border-bottom:1px solid var(--line)}
+  ol.road li:last-child{border-bottom:0}
+  ol.road li::before{content:counter(r);position:absolute;left:0;top:11px;width:30px;height:30px;
+    border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:.9rem;font-variant-numeric:tabular-nums}
+  ol.road .rt{font-weight:600}
+  ol.road .rd{font-size:.86rem;color:var(--muted);margin-top:2px}
+  .pri{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    padding:2px 7px;border-radius:5px;margin-left:8px}
+  .pri.now{background:var(--crit-bg);color:var(--crit)}
+  .pri.next{background:var(--high-bg);color:var(--high)}
+  .pri.then{background:var(--low-bg);color:var(--low)}
+
+  .lessons{display:grid;grid-template-columns:1fr;gap:10px}
+  .lesson{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}
+  .lesson .lt{font-weight:650;font-size:.92rem}
+  .lesson .ld{font-size:.85rem;color:var(--muted);margin-top:3px}
+
+  footer{padding-block:26px 40px;color:var(--faint);font-size:.8rem}
+  footer .disc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+
+  @media (max-width:640px){
+    .envs{grid-template-columns:1fr}
+    .branch{grid-template-columns:1fr}
+    h1{font-size:1.9rem}
+  }
+  .gone-tbl .x{display:inline-block;width:1.3em;color:var(--crit);font-weight:800}
+  .gone-tbl tr.grp td{background:var(--panel);font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
+  .lede2{margin:0 0 10px;font-size:.92rem;color:var(--muted)}
+  .node.gone{border:2px dashed var(--faint);box-shadow:none;opacity:1;
+    background:linear-gradient(to top right,transparent calc(50% - 1px),var(--line-2) calc(50% - 1px),var(--line-2) calc(50% + 1px),transparent calc(50% + 1px)),
+      linear-gradient(to bottom right,transparent calc(50% - 1px),var(--line-2) calc(50% - 1px),var(--line-2) calc(50% + 1px),transparent calc(50% + 1px)),var(--panel)}
+  .node.gone .t,.node.gone .s,.node.gone code{color:var(--muted)}
+  .node.gone .tag{filter:grayscale(1);opacity:.75}
+  .node.gone::before{content:'\2715  SE RETIRA';white-space:pre;position:absolute;left:10px;top:-10px;background:var(--muted);color:var(--bg);font-size:.58rem;font-weight:800;letter-spacing:.06em;padding:1px 7px;border-radius:7px;line-height:1.5}
+  .conn.gone{background:repeating-linear-gradient(to bottom,var(--faint) 0 5px,transparent 5px 9px)}
+  .conn.gone::after{border-top-color:var(--faint)}
+  .sw.gone{border:1.5px dashed var(--faint);background:var(--panel)}
+
+
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 12px;
+    border-top:3px solid var(--s,var(--line-2));min-width:0}
+  .stat .n{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+  .stat .l{font-size:.72rem;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+  .stat.c-crit{--s:var(--crit)} .stat.c-high{--s:var(--high)} .stat.c-med{--s:var(--med)}
+  .stat.c-low{--s:var(--low)} .stat.c-now{--s:var(--accent)}
+  .b-live{background:var(--crit);color:var(--bg);border:1px solid var(--crit)}
+  .src3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .src3 .col{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+  .node.newpath{border-color:var(--med-line);box-shadow:inset 0 0 0 1px var(--med-line)}
+  .ref{border:1px dashed var(--line-2);border-radius:12px;padding:18px;margin-top:18px;background:var(--bg)}
+  .ref .dtitle{color:var(--ok)}
+  @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.src3{grid-template-columns:1fr}}
+
+
+  .wrap{max-width:1180px}
+  .mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto auto;gap:0 14px;min-width:980px}
+  .mgrid .col{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+  .mgrid .colD{grid-column:4;grid-row:1 / span 2;justify-content:flex-start;border-left:1px dashed var(--line-2);padding-left:14px}
+  .mgrid .common{grid-column:1 / span 3;grid-row:2;display:flex;flex-direction:column;align-items:center}
+  .mgrid .common .node{width:min(420px,100%)}
+  .colhead{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin:0 0 10px}
+  .colhead small{display:block;color:var(--faint);font-weight:500;letter-spacing:.02em;text-transform:none;font-size:.78rem;margin-top:2px}
+  .note{font-size:.72rem;color:var(--faint);font-family:var(--mono);border:1px dashed var(--line-2);border-radius:7px;padding:5px 8px;margin-top:8px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.8rem;color:var(--muted);margin:0 0 12px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:18px;height:12px;border-radius:4px;border:1px solid var(--line-2);background:var(--bg);display:inline-block}
+  .sw.pub{border-color:var(--crit-line);box-shadow:inset 0 0 0 1px var(--crit-line)}
+  .sw.az{border-color:var(--med-line);box-shadow:inset 0 0 0 1px var(--med-line)}
+  .sw.new{border-color:var(--ok-line);box-shadow:inset 0 0 0 1px var(--ok-line)}
+  .sw.dead{border-style:dashed;opacity:.7}
+  .node.az{border-color:var(--med-line);box-shadow:inset 0 0 0 1px var(--med-line)}
+  .tag.sie{background:var(--ok-bg);color:var(--ok);border:1px solid transparent}
+  .diagram .retired .node{min-width:150px}
+  .conn.join::after{display:none}
+  .mgrid .common .bus{align-self:stretch;height:2px;background:var(--line-2);margin:0 calc(100% / 6)}
+  .mgrid .common .bus.good{background:var(--ok)}
+  .mgrid .conn .lbl{white-space:normal;width:max-content;max-width:150px;line-height:1.25}
+
+  /* Cremallera: dos rieles horizontales que se juntan en Hoy; el detalle del paso va debajo. */
+  .wrap{max-width:1240px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+  .zip-scroll{overflow-x:auto;padding:14px 10px}
+  .zip-svg{display:block;width:100%;min-width:980px;height:auto}
+  .rail{fill:none;stroke:var(--line-2);stroke-width:2.5;stroke-linecap:round}
+  .mk-r{fill:var(--line-2)} .mk-c{fill:var(--faint)} .mk-u{fill:var(--accent)}
+  .rlbl{font:700 11px var(--sans);letter-spacing:.14em;fill:var(--accent)}
+  .snum{font:600 12px var(--display);fill:var(--accent)}
+  .bx{fill:var(--bg);stroke:var(--line-2);stroke-width:1.2}
+  .bt{font:600 10.6px var(--sans);fill:var(--ink)}
+  .sec .bx{fill:var(--panel-2)}
+  .step,.sec{cursor:pointer}
+  .step:focus,.sec:focus{outline:none}
+  .step:hover .bx,.sec:hover .bx,.step:focus-visible .bx,.sec:focus-visible .bx{stroke:var(--accent)}
+  .conn{fill:none;stroke:var(--faint);stroke-width:1.5}
+  .conn.up{stroke:var(--accent);stroke-width:1.7}
+  .hoybx{fill:var(--accent);stroke:var(--accent)}
+  .hoyt{font:600 15px var(--display);fill:var(--bg)}
+  [data-i]{transition:opacity .25s}
+  .step.dim .bt,.sec.dim .bt{opacity:.2}
+  .step.dim .bx,.sec.dim .bx{stroke-opacity:.3}
+  .snum.dim,.conn.dim,.hoy.dim,.clbl.dim{opacity:.15}
+  .cur .bx{stroke:var(--accent);stroke-width:2.2}
+  .snake-body{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round;opacity:.85}
+  .snake-head{fill:var(--ok)} .snake-eye{fill:var(--bg)} .food{fill:var(--crit)}
+  .legend .ln{display:inline-block;width:26px;height:2px;vertical-align:middle}
+  .legend .ln.abre{background:repeating-linear-gradient(to right,var(--crit) 0 5px,transparent 5px 9px)}
+  .legend .ln.ok{background:var(--ok)}
+  .legend .ln.pieza{height:6px;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+  .legend .dt{display:inline-block;width:11px;height:11px;border-radius:50%}
+  .legend .dt.ring{border:1.5px dashed var(--accent);width:16px;height:16px}
+  .ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 10px}
+  .ctrl button{font:600 .82rem var(--sans);color:var(--accent);background:var(--accent-soft);border:1px solid var(--line-2);
+    border-radius:8px;padding:6px 12px;cursor:pointer}
+  .ctrl button:hover{border-color:var(--accent)}
+  .ctrl button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .pos{font-family:var(--mono);font-size:.8rem;color:var(--muted);min-width:7.5em;text-align:center}
+  .hint{font-size:.8rem;color:var(--faint)}
+  .detail{margin-top:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 22px}
+  .detail .empty{margin:0;color:var(--faint);font-size:1rem}
+  .s-head{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.6fr);gap:28px;align-items:start;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .s-k{font-family:var(--display);font-weight:600;color:var(--accent);font-size:1.05rem}
+  .s-title h3{font-family:var(--display);font-weight:600;font-size:2rem;line-height:1.1;margin:4px 0 8px}
+  .s-when{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+  .s-lead p{font-size:1.05rem;line-height:1.45;margin:0;max-width:none}
+  .tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tool{font-size:.85rem;font-weight:600;background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;padding:3px 9px}
+  .presenting .zip-svg{max-height:230px;min-width:0;margin:0 auto}
+  .presenting .zip-scroll{padding:6px 10px}
+  .s-strip{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;padding-top:16px}
+  .ej,.err{border-radius:10px;padding:12px 16px}
+  .ej{background:var(--accent-soft);border:1px solid var(--line-2)}
+  .ej p{font-size:1rem;line-height:1.4;margin:0;max-width:none}
+  .err{background:var(--med-bg);border:1px solid var(--med-line)}
+  .err .s-lbl{color:var(--med);margin-bottom:6px}
+  .err p{font-size:.98rem;line-height:1.4;margin:0;max-width:none}
+  .ej .s-lbl{margin-bottom:6px}
+  .s-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;padding-top:14px}
+  .s-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--accent);margin:0 0 10px}
+  .s-gap{margin-top:14px}
+  .hitos{list-style:none;margin:0;display:grid;gap:7px;border-left:2px solid var(--line-2);padding-left:12px}
+  .hitos li{font-size:.95rem;display:grid;grid-template-columns:5.8em minmax(0,1fr);gap:8px}
+  .hd{font-family:var(--mono);font-size:.8rem;color:var(--accent);padding-top:2px}
+  .s-take ul{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+  .s-take li{font-size:1.05rem;font-weight:600;line-height:1.3;padding-left:24px;position:relative}
+  .s-take li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+  .s-take ul.plain li{font-size:.92rem;font-weight:400;color:var(--muted)}
+  .s-take ul.plain li::before{content:"·";color:var(--faint)}
+  .segn{font-size:.92rem;margin:0 0 10px}
+  .segi{margin-bottom:10px}
+  .segi p{font-size:.86rem;color:var(--muted);margin:4px 0 0}
+  .segl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.95rem}
+  .s-neck{margin-top:14px;padding:12px 14px;background:var(--crit-bg);border:1px solid var(--crit-line);border-radius:10px}
+  .s-neck .s-lbl{color:var(--crit);margin-bottom:4px}
+  .nk{font-family:var(--display);font-size:1.3rem;font-weight:600;color:var(--crit);line-height:1.2}
+  .s-neck p{font-size:.88rem;margin:6px 0 0}
+  @media (max-width:820px){.s-head,.s-cols,.s-strip{grid-template-columns:minmax(0,1fr)}}
+  .b-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+  .quote{font-family:var(--display);font-size:1.3rem;line-height:1.35;max-width:46ch;margin:18px 0 0}
+  @media (prefers-reduced-motion:reduce){[data-i]{transition:none}}
+</style>
+<div class="wrap">
+<header class="masthead">
+  <p class="kicker">BarCamp · borrador del diagrama</p>
+  <h1>El cuello de botella se mueve</h1>
+  <div class="meta"><span><b>Fecha</b> 2026-10-14</span><span><b>Autora</b> Shailyn Ortiz</span><span><b>Estado</b> borrador, fechas por verificar</span></div>
+</header>
+
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>La línea de tiempo</h2></div>
+  <div class="ctrl" id="ctrl-anchor">
+    <button type="button" id="b-mode">Presentar</button>
+    <button type="button" id="b-prev" aria-label="Paso anterior" hidden>◀</button>
+    <span class="pos" id="pos" hidden></span>
+    <button type="button" id="b-next" aria-label="Paso siguiente" hidden>▶</button>
+    <span class="hint" id="hint">Toca un paso para ver el detalle, o presenta: la serpiente avanza y se come el cuello de botella de cada paso.</span>
+  </div>
+  <div class="diagram zip-scroll">
+    <svg class="zip-svg" id="zsvg" viewBox="0 0 1400 360" role="img" aria-label="Línea de avances arriba y pista de seguridad abajo, que se juntan en Hoy">
+      <defs>
+  <marker id="m-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+  <marker id="m-u" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-u"/></marker>
+  <marker id="m-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+</defs>
+      <path class="rail" d="M44,110 H1226 C1276,110 1260,195 1312,195" marker-end="url(#m-r)"/><path class="rail" d="M44,280 H1226 C1276,280 1260,195 1312,195" marker-end="url(#m-r)"/><text class="rlbl" x="44" y="26">AVANCE</text><text class="rlbl" x="44" y="328">SEGURIDAD</text><path class="conn" data-i="2" d="M185.2,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="3" d="M274.3,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="6" d="M541.8,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="7" d="M631.0,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="8" d="M720.2,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="9" d="M809.3,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn" data-i="12" d="M1076.8,130.0 V257.0" marker-end="url(#m-c)"/><path class="conn up" data-i="6" d="M303.3,260.0 V195 H512.8 V133.0" marker-end="url(#m-u)"/><text class="snum" data-i="1" x="96.0" y="82.0" text-anchor="middle">1</text><g class="step" data-i="1" data-sel="1" tabindex="0" role="button" aria-label="Manual y CI/CD"><rect class="bx" x="53.0" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="96.0" y="107" text-anchor="middle"><tspan x="96.0" dy="0">Manual y</tspan><tspan x="96.0" dy="14">CI/CD</tspan></text></g><text class="snum" data-i="2" x="185.2" y="82.0" text-anchor="middle">2</text><g class="step" data-i="2" data-sel="2" tabindex="0" role="button" aria-label="Chat y autocompletado"><rect class="bx" x="142.2" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="185.2" y="107" text-anchor="middle"><tspan x="185.2" dy="0">Chat y</tspan><tspan x="185.2" dy="14">autocompletado</tspan></text></g><text class="snum" data-i="3" x="274.3" y="82.0" text-anchor="middle">3</text><g class="step" data-i="3" data-sel="3" tabindex="0" role="button" aria-label="Agentes de código"><rect class="bx" x="231.3" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="274.3" y="107" text-anchor="middle"><tspan x="274.3" dy="0">Agentes de</tspan><tspan x="274.3" dy="14">código</tspan></text></g><text class="snum" data-i="4" x="363.5" y="82.0" text-anchor="middle">4</text><g class="step" data-i="4" data-sel="4" tabindex="0" role="button" aria-label="Revisión con IA"><rect class="bx" x="320.5" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="363.5" y="107" text-anchor="middle"><tspan x="363.5" dy="0">Revisión con</tspan><tspan x="363.5" dy="14">IA</tspan></text></g><text class="snum" data-i="5" x="452.7" y="82.0" text-anchor="middle">5</text><g class="step" data-i="5" data-sel="5" tabindex="0" role="button" aria-label="Ambiente por PR"><rect class="bx" x="409.7" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="452.7" y="107" text-anchor="middle"><tspan x="452.7" dy="0">Ambiente por</tspan><tspan x="452.7" dy="14">PR</tspan></text></g><text class="snum" data-i="6" x="541.8" y="82.0" text-anchor="middle">6</text><g class="step" data-i="6" data-sel="6" tabindex="0" role="button" aria-label="Agentes de incidentes"><rect class="bx" x="498.79999999999995" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="541.8" y="107" text-anchor="middle"><tspan x="541.8" dy="0">Agentes de</tspan><tspan x="541.8" dy="14">incidentes</tspan></text></g><text class="snum" data-i="7" x="631.0" y="82.0" text-anchor="middle">7</text><g class="step" data-i="7" data-sel="7" tabindex="0" role="button" aria-label="Agentes de requerimientos"><rect class="bx" x="588.0" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="631.0" y="107" text-anchor="middle"><tspan x="631.0" dy="0">Agentes de</tspan><tspan x="631.0" dy="14">requerimientos</tspan></text></g><text class="snum" data-i="8" x="720.2" y="82.0" text-anchor="middle">8</text><g class="step" data-i="8" data-sel="8" tabindex="0" role="button" aria-label="RAG y KAG"><rect class="bx" x="677.2" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="720.2" y="114" text-anchor="middle"><tspan x="720.2" dy="0">RAG y KAG</tspan></text></g><text class="snum" data-i="9" x="809.3" y="82.0" text-anchor="middle">9</text><g class="step" data-i="9" data-sel="9" tabindex="0" role="button" aria-label="Routing de modelos"><rect class="bx" x="766.3" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="809.3" y="107" text-anchor="middle"><tspan x="809.3" dy="0">Routing de</tspan><tspan x="809.3" dy="14">modelos</tspan></text></g><text class="snum" data-i="10" x="898.5" y="82.0" text-anchor="middle">10</text><g class="step" data-i="10" data-sel="10" tabindex="0" role="button" aria-label="SLM por tarea"><rect class="bx" x="855.5" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="898.5" y="114" text-anchor="middle"><tspan x="898.5" dy="0">SLM por tarea</tspan></text></g><text class="snum" data-i="11" x="987.7" y="82.0" text-anchor="middle">11</text><g class="step" data-i="11" data-sel="11" tabindex="0" role="button" aria-label="LoRA"><rect class="bx" x="944.7" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="987.7" y="114" text-anchor="middle"><tspan x="987.7" dy="0">LoRA</tspan></text></g><text class="snum" data-i="12" x="1076.8" y="82.0" text-anchor="middle">12</text><g class="step" data-i="12" data-sel="12" tabindex="0" role="button" aria-label="vLLM self-hosting"><rect class="bx" x="1033.8" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="1076.8" y="107" text-anchor="middle"><tspan x="1076.8" dy="0">vLLM</tspan><tspan x="1076.8" dy="14">self-hosting</tspan></text></g><text class="snum" data-i="13" x="1166.0" y="82.0" text-anchor="middle">13</text><g class="step" data-i="13" data-sel="13" tabindex="0" role="button" aria-label="IA local"><rect class="bx" x="1123.0" y="90.0" width="86" height="40" rx="8"/><text class="bt" x="1166.0" y="114" text-anchor="middle"><tspan x="1166.0" dy="0">IA local</tspan></text></g><g class="sec" data-i="2" data-sel="2" tabindex="0" role="button" aria-label="Guardrails"><rect class="bx" x="142.2" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="185.2" y="284" text-anchor="middle"><tspan x="185.2" dy="0">Guardrails</tspan></text></g><g class="sec" data-i="3" data-sel="3" tabindex="0" role="button" aria-label="Harness y sandbox"><rect class="bx" x="231.3" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="274.3" y="277" text-anchor="middle"><tspan x="274.3" dy="0">Harness y</tspan><tspan x="274.3" dy="14">sandbox</tspan></text></g><g class="sec" data-i="6" data-sel="6" tabindex="0" role="button" aria-label="Trazabilidad"><rect class="bx" x="498.79999999999995" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="541.8" y="284" text-anchor="middle"><tspan x="541.8" dy="0">Trazabilidad</tspan></text></g><g class="sec" data-i="7" data-sel="7" tabindex="0" role="button" aria-label="Identidad de agentes"><rect class="bx" x="588.0" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="631.0" y="277" text-anchor="middle"><tspan x="631.0" dy="0">Identidad de</tspan><tspan x="631.0" dy="14">agentes</tspan></text></g><g class="sec" data-i="8" data-sel="8" tabindex="0" role="button" aria-label="Acceso en RAG"><rect class="bx" x="677.2" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="720.2" y="284" text-anchor="middle"><tspan x="720.2" dy="0">Acceso en RAG</tspan></text></g><g class="sec" data-i="9" data-sel="9" tabindex="0" role="button" aria-label="AI gateway"><rect class="bx" x="766.3" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="809.3" y="284" text-anchor="middle"><tspan x="809.3" dy="0">AI gateway</tspan></text></g><g class="sec" data-i="12" data-sel="12" tabindex="0" role="button" aria-label="Safetensors"><rect class="bx" x="1033.8" y="260.0" width="86" height="40" rx="8"/><text class="bt" x="1076.8" y="284" text-anchor="middle"><tspan x="1076.8" dy="0">Safetensors</tspan></text></g><g class="step hoy" data-i="14" data-sel="14" tabindex="0" role="button" aria-label="Hoy">
+  <rect class="bx hoybx" x="1286" y="173" width="88" height="44" rx="22"/>
+  <text class="hoyt" x="1330" y="200" text-anchor="middle">Hoy</text>
+</g><g id="snake"></g>
+    </svg>
+  </div>
+  <div class="detail" id="detail" aria-live="polite"></div>
+  <p class="quote">“El próximo salto de velocidad no lo va a dar un modelo mejor. Lo va a dar poder confiar en lo que hacen los agentes.”</p>
+</section>
+
+<footer>
+  <div class="disc">Los pasos van en el orden en que cada uno se volvió el cuello de botella, no por fecha de lanzamiento. Las fechas son de año y salieron de memoria; hay que verificarlas con fuentes antes de la charla. “Aparece” es la primera publicación o lanzamiento; “uso real” es cuando se volvió práctico en producción.</div>
+</footer>
+</div>
+<script>
+(function () {
+  var DETAIL = {"1": {"t": "Manual → CI/CD → monitoreo", "when": "antes de 2020", "neck": "escribir código", "tools": ["Jenkins", "GitHub Actions", "Azure Pipelines", "Terraform"], "lleva": ["Publica el artefacto una vez y despliega por digest o versión", "Aprobación obligatoria en QA y PROD, configurada en el ambiente", "Un marker en tu APM por cada deploy"], "ej": "El mismo artefacto que se probó en QA es el que llega a producción: se construye una vez y se promueve.", "err": "Reconstruir en cada ambiente: lo que llega a producción no es lo que se probó.", "lead": "Ticket, branch, PR, revisión, deploy a DEV, QA y PROD. Primero todo a mano; después los pipelines construyen, prueban y despliegan solos, y el monitoreo avisa cuando algo falla en producción.", "hitos": [["2005", "Hudson, después Jenkins (2011)"], ["2013", "Docker"], ["2014", "Kubernetes"], ["2019", "GitHub Actions"], ["2019", "OpenTelemetry"]], "medir": ["Las cuatro métricas DORA: frecuencia de deploy, lead time, tasa de fallos y tiempo de recuperación."], "seg": "La base de siempre: secretos fuera del repo, escaneo de dependencias y de imágenes, mínimo privilegio en los pipelines.", "why": "Entregar ya es rápido. Lo lento ahora es escribir el código.", "sec": []}, "2": {"t": "Autocompletado y chat", "when": "aparece 2021 · uso real 2023", "neck": "escribir código", "tools": ["GitHub Copilot", "ChatGPT", "Claude", "Cursor"], "lleva": ["Una cuenta empresarial para todos, no cuentas personales", "Una política de una página: qué datos nunca van al chat", "El código con IA pasa por los mismos gates"], "ej": "Alguien pega un stack trace en el chat y tiene una hipótesis de la causa en segundos.", "err": "Pegar datos de clientes o secretos en un chat con cuenta personal.", "lead": "La IA entra como asistente individual: completa líneas en el IDE y responde en un chat. Se escribe más rápido, aparece el vibe coding y cada área adopta su propia herramienta.", "hitos": [["jun 2020", "GPT-3"], ["jun 2021", "GitHub Copilot en preview"], ["nov 2022", "ChatGPT"], ["mar 2023", "GPT-4"], ["mar 2023", "Claude"], ["2023", "Cursor"]], "medir": ["Tiempo de ciclo del PR.", "Defectos por cambio, para ver si la velocidad trae errores.", "Porcentaje de sugerencias aceptadas."], "seg": "Aquí nace la pista de seguridad: el modelo sigue instrucciones que vienen dentro de los datos.", "why": "La IA ayuda línea por línea, no tarea por tarea. Escribir código sigue siendo lo lento.", "sec": [{"id": "inj", "n": "Prompt injection", "st": "crit", "stl": "Abierto", "rel": "abre", "d": "No hay defensa completa. Lo práctico es no juntar datos no confiables, datos privados y una salida al exterior."}, {"id": "cls", "n": "Guardrails", "st": "med", "stl": "Parcial", "rel": "abre", "d": "Clasificadores de entrada y salida: paran ataques conocidos, no los nuevos."}]}, "3": {"t": "Agentes de código", "when": "aparece 2023 · uso real 2025", "neck": "revisión de PRs", "tools": ["Claude Code", "Codex", "Cursor", "Copilot agent mode"], "lleva": ["Escribe esta semana el CLAUDE.md de tu repo más usado", "Protege main: merge solo con aprobación humana", "Dale al agente un comando que valide sin desplegar"], "ej": "Un cambio de pipeline llega a 13 repos en una tarde: un agente por repo, todos salidos del mismo template, cada cambio validado con un preview que no ejecuta nada.", "err": "Darle al agente permiso de merge para ir más rápido.", "lead": "El agente deja de sugerir y ejecuta tareas completas: lee el repo, cambia archivos, corre los tests y abre el PR. Con reglas por repo y varios agentes en paralelo, se hacen 5 cambios en el tiempo de 1.", "hitos": [["oct 2022", "ReAct: razonar y usar herramientas"], ["mar 2023", "AutoGPT, todavía no funcionaba"], ["oct 2023", "SWE-bench"], ["jun 2024", "Claude 3.5 Sonnet dispara los benchmarks"], ["feb 2025", "Claude Code"], ["may 2025", "Codex"], ["2025", "AGENTS.md como convención"]], "medir": ["PRs por persona por semana.", "Porcentaje de PRs que pasan CI a la primera.", "Tiempo que un PR espera revisión."], "seg": "Un agente que ejecuta comandos necesita límites: qué herramientas puede usar, en qué carpetas y con qué aprobación.", "why": "Llegan 5 veces más PRs y la revisión humana no escala.", "sec": [{"id": "har", "n": "Harness y sandbox", "st": "ok", "stl": "Resuelto", "rel": "abre", "d": "Permisos de herramientas, sandbox y hooks: qué puede usar el agente y dónde."}]}, "4": {"t": "Agentes de revisión de código", "when": "aparece 2023 · uso real 2024", "neck": "QA y ambientes", "tools": ["CodeRabbit", "Copilot code review", "Greptile", "Claude Code Action"], "lleva": ["Agente como check obligatorio en cada PR", "Sus reglas salen del CLAUDE.md del repo", "Aprobar sigue siendo de una persona"], "ej": "El revisor marca un secreto expuesto en el PR antes de que lo abra una persona.", "err": "Tomar los comentarios del agente como si fueran una aprobación.", "lead": "Un agente hace la primera revisión de cada PR: bugs, estilo, seguridad y consistencia con el resto del código. La persona revisa diseño y riesgo, y sigue aprobando.", "hitos": [["2023", "CodeRabbit"], ["2024", "Copilot code review en preview"], ["2025", "Revisión con Claude o Codex desde el PR"]], "medir": ["Tiempo hasta la primera revisión.", "Comentarios útiles frente a ruido.", "Defectos que llegan a producción."], "seg": "El revisor lee contenido que no controla: un PR puede traer instrucciones para engañarlo. Por eso nunca tiene permiso de merge.", "why": "El código se revisa rápido, pero probarlo en un ambiente compartido es lento.", "sec": []}, "5": {"t": "Pruebas y ambiente por PR", "when": "uso real 2025", "neck": "incidentes en PROD", "tools": ["Vercel", "Netlify", "Kubernetes con namespaces por PR", "Terraform"], "lleva": ["Infraestructura parametrizada por número de PR", "Datos sintéticos, nunca una copia de producción", "Ambiente destruido al cerrar el PR"], "ej": "Cada PR publica su URL de preview y producto lo prueba antes del merge.", "err": "Copiar la base de datos de producción al ambiente de prueba.", "lead": "Cada PR tiene su propio ambiente y sus pruebas. Los agentes generan tests y QA prueba antes del merge, no después.", "hitos": [["2019–2020", "Preview deployments en Vercel y Netlify"], ["2020+", "Ambientes efímeros en Kubernetes"], ["2025", "Agentes que escriben y corren pruebas e2e"]], "medir": ["Tiempo de QA por cambio.", "Defectos encontrados antes de producción.", "Costo de los ambientes efímeros."], "seg": "Un ambiente por PR multiplica las credenciales y los datos de prueba: ninguno debe tener datos personales reales.", "why": "Más cambios llegan más rápido a producción, y con ellos más incidentes.", "sec": []}, "6": {"t": "Agentes de incidentes", "when": "aparece 2024 · uso real 2025", "neck": "qué construir", "tools": ["MCP de New Relic, Datadog, Grafana o Sentry", "PagerDuty", "Webhooks de deploy", "Claude Agent SDK"], "lleva": ["Empieza con el evento de deploy, no con todas las alertas", "Solo lectura: métricas, logs y el diff", "Cada análisis enlaza las consultas que usó"], "ej": "Tres minutos después de un deploy, el agente escribe en el canal: «el error rate subió de 0,2 % a 4 %, viene del cambio en el módulo de pagos, recomiendo rollback». Una persona decide.", "err": "Dejar que el agente haga el rollback solo desde el primer día.", "lead": "Los agentes ya no esperan a que alguien les escriba: los dispara un evento. Un deploy activa un agente que compara errores y latencia antes y después; una alerta activa el triage, que correlaciona logs, cambios recientes y runbooks. El agente deja su análisis y una persona decide.", "hitos": [["jun 2023", "Function calling"], ["nov 2024", "Model Context Protocol (MCP)"], ["2025", "Servidores MCP de observabilidad y agentes SRE"]], "medir": ["Tiempo hasta el primer diagnóstico.", "Tiempo de recuperación.", "Porcentaje de análisis que resultaron correctos."], "seg": "Para dejar que un agente toque producción hay que poder reconstruir qué hizo: cada llamada a una herramienta, con qué permiso y qué devolvió.", "why": "Operar ya no es lo lento. Lo lento es decidir bien qué construir.", "sec": [{"id": "har", "n": "Harness y sandbox", "st": "ok", "stl": "Resuelto", "rel": "habilita", "d": "Es lo que permite que estos agentes toquen producción en solo lectura."}, {"id": "trz", "n": "Trazabilidad", "st": "med", "stl": "Parcial", "rel": "abre", "d": "Langfuse, LangSmith y OpenTelemetry muestran qué hizo cada agente: tool calls, permisos y resultados. Falta el porqué y quién lo delegó."}]}, "7": {"t": "Agentes de requerimientos", "when": "uso real 2025–2026", "neck": "contexto de negocio", "tools": ["MCP de Jira, Linear o Notion", "Lovable", "v0", "Claude"], "lleva": ["Plantilla de pedido: problema, para quién, cómo se valida", "Criterios aprobados antes de escribir código", "Preview obligatorio antes del merge"], "ej": "Producto escribe «quiero filtrar por fecha». El agente pregunta qué fecha, propone los criterios de aceptación y entrega un preview para validar.", "err": "Saltarse la especificación: el agente construye lo que entendió, no lo que se pidió.", "lead": "Producto pide funcionalidades sin contexto técnico. Un agente de intake hace las preguntas que faltan, escribe la especificación y los criterios de aceptación, ubica dónde va el cambio y abre un PR con su ambiente de preview. Ingeniería revisa y aprueba.", "hitos": [["2024", "Prototipos generados con v0"], ["2024", "Prototipos generados con Lovable"], ["2025", "MCP de Jira, Linear y Notion"], ["2025–2026", "Agentes de intake conectados al repo"]], "medir": ["Tiempo de la idea al preview.", "Pedidos que llegan a producción sin rehacerse.", "Preguntas que el agente tuvo que escalar a ingeniería."], "seg": "El agente actúa en nombre de quien pide. Eso abre la pregunta de identidad: con qué permisos actúa y quién responde por lo que hace.", "why": "El agente no conoce las reglas del negocio, las decisiones anteriores ni el vocabulario de la empresa.", "sec": [{"id": "idn", "n": "Identidad de agentes", "st": "crit", "stl": "Abierto", "rel": "abre", "d": "Permisos delegados, mínimo privilegio y revocación para agentes."}, {"id": "mcp", "n": "MCP y memoria", "st": "crit", "stl": "Abierto", "rel": "abre", "d": "Servidores MCP de terceros y memoria envenenada como vía de ataque."}]}, "8": {"t": "RAG → GraphRAG y KAG → búsqueda agéntica", "when": "aparece 2020 · uso real 2023–2025", "neck": "costo", "tools": ["pgvector", "OpenSearch", "Pinecone", "LangChain"], "lleva": ["Escribe 40 preguntas reales con su respuesta antes de indexar", "Búsqueda híbrida: palabras clave más vectores", "Versiona el índice; reindexa al cambiar de embeddings"], "ej": "A la pregunta «¿por qué este servicio usa colas?», el agente responde citando el documento de arquitectura y el ticket donde se decidió.", "err": "Indexar todo sin limpiar: datos personales y documentos viejos que contradicen a los nuevos.", "lead": "Entrenar un modelo propio era imposible por costo, datos y talento. La salida fue darle contexto al modelo en cada consulta: primero RAG simple, después búsqueda híbrida con reranking, grafos de conocimiento y búsqueda agéntica.", "hitos": [["may 2020", "Paper de RAG"], ["oct 2022", "LangChain"], ["nov 2022", "LlamaIndex"], ["dic 2022", "Embeddings baratos (ada-002)"], ["abr 2024", "GraphRAG"], ["sep 2024", "KAG"], ["sep 2024", "Contextual Retrieval"], ["2025", "Búsqueda agéntica"]], "medir": ["Recall@k: si el documento correcto aparece entre los primeros resultados.", "Respuestas correctas en el set de evals.", "Antigüedad del índice frente a las fuentes."], "seg": "Los documentos indexados pueden traer instrucciones escondidas, y la búsqueda tiene que respetar lo que cada usuario puede ver.", "why": "Más contexto por llamada y agentes que leen todo: los tokens se disparan.", "sec": [{"id": "rag", "n": "Acceso en RAG", "st": "crit", "stl": "Abierto", "rel": "abre", "d": "Los documentos indexados traen instrucciones escondidas, y los permisos por usuario son difíciles de respetar al buscar."}]}, "9": {"t": "Control de costos", "when": "uso real 2024–2025", "neck": "tareas simples a precio frontier", "tools": ["LiteLLM", "Portkey", "OpenRouter", "Bedrock"], "lleva": ["Asigna tus 5 tareas más frecuentes al modelo más barato que las resuelve", "Cachea el contexto fijo", "Lo que no es urgente, en batch"], "ej": "Los tickets se clasifican con el modelo chico y el grande queda para el código: el mismo trabajo, con una factura mucho menor.", "err": "Medir el costo por token en vez del costo por tarea resuelta.", "lead": "Cada tarea va al modelo más barato que la resuelve: Haiku clasifica, Sonnet programa, Opus diseña. Un gateway centraliza las llamadas, aplica presupuestos por equipo y cachea el contexto que se repite.", "hitos": [["mar 2024", "Familias de modelos por tamaño: Haiku, Sonnet y Opus"], ["abr 2024", "Batch API"], ["jul 2024", "Routers de modelos (RouteLLM)"], ["ago 2024", "Prompt caching"], ["sep 2024", "Modelos de razonamiento, que gastan más tokens"]], "medir": ["Costo por tarea resuelta, no por token.", "Porcentaje del tráfico que va al modelo chico.", "Tasa de aciertos de la caché."], "seg": "El gateway es también el punto de control de seguridad: ahí van los clasificadores, el enmascarado de datos personales y el registro de qué datos salen.", "why": "Incluso el modelo más chico de un proveedor es caro para millones de tareas simples.", "sec": [{"id": "gw", "n": "AI gateway", "st": "ok", "stl": "Resuelto", "rel": "pieza", "d": "El mismo gateway de costos es el punto de control: clasificadores y enmascarado de datos personales."}]}, "10": {"t": "Modelos pequeños por tarea (SLM)", "when": "aparece 2023 · uso real 2024–2025", "neck": "hacer bien tu tarea", "tools": ["Phi", "Gemma", "Llama", "Qwen"], "lleva": ["Una tarea repetitiva con respuesta verificable", "Dataset generado por el modelo grande", "Cambia solo si iguala al grande en tus evals"], "ej": "Un modelo de 3B enruta cada pedido a la cola correcta en milisegundos, sin pasar por un modelo frontier.", "err": "Pasarse al modelo chico sin compararlo en las mismas evals.", "lead": "Modelos de 1 a 8 mil millones de parámetros resuelven bien una tarea acotada (clasificar, extraer, enrutar) por una fracción del costo. Se entrenan con las salidas de un modelo grande (destilación).", "hitos": [["sep 2023", "Mistral 7B"], ["dic 2023", "Phi-2"], ["feb 2024", "Gemma"], ["abr 2024", "Phi-3"], ["sep 2024", "Llama 3.2 1B y 3B"], ["sep 2024", "Qwen 2.5"], ["2025", "Gemma 3"], ["2025", "Qwen3"]], "medir": ["Calidad frente al modelo grande en el mismo set de evals.", "Costo y latencia por llamada."], "seg": "Los modelos chicos son más fáciles de manipular: los guardrails del gateway importan más.", "why": "Un modelo chico genérico no conoce tu formato ni tu dominio.", "sec": []}, "11": {"t": "LoRA sobre modelos abiertos", "when": "aparece 2021 · uso real 2024", "neck": "dónde correrlos", "tools": ["Hugging Face PEFT", "Unsloth", "Axolotl", "Fine-tuning de Bedrock u OpenAI"], "lleva": ["LoRA para formato y estilo; RAG para conocimiento", "Dataset versionado y sin datos personales", "El adapter se promueve solo si gana en evals"], "ej": "Un adapter aprende el formato de los reportes de la empresa, algo que ningún prompt lograba fijar.", "err": "Usar LoRA para darle al modelo conocimiento que cambia; eso le toca a RAG.", "lead": "LoRA entrena un adapter pequeño encima de un modelo abierto en vez de entrenar el modelo completo. QLoRA lo volvió posible en una sola GPU. Es la primera forma real de personalizar un modelo para una empresa.", "hitos": [["jun 2021", "Paper de LoRA"], ["may 2023", "QLoRA"], ["jul 2023", "Llama 2 con licencia comercial"], ["ago 2023", "Fine-tuning administrado"], ["2024", "Unsloth"], ["2024", "Axolotl"]], "medir": ["Mejora en evals frente a prompt más RAG.", "Costo de entrenar y de mantener el adapter."], "seg": "Lo que aprende un adapter no tiene permisos y no se puede borrar sin reentrenar.", "why": "Los adapters necesitan dónde servirse, y la API del proveedor no siempre lo permite.", "sec": []}, "12": {"t": "Self-hosting de varios modelos", "when": "aparece 2023 · uso real 2024–2025", "neck": "GPU y operación", "tools": ["vLLM", "SGLang", "TGI", "NVIDIA NIM"], "lleva": ["El mismo gateway para modelos propios y de proveedor", "Costo total: GPU, guardia y actualizaciones", "Empieza con un modelo y un adapter"], "ej": "Un solo servidor atiende el modelo base y un adapter por área, detrás del mismo gateway de siempre.", "err": "Migrar por costo sin contar la operación, las GPUs ociosas y la guardia.", "lead": "Los modelos corren en tu infraestructura. Un servidor sirve varios adapters LoRA a la vez; la cuantización y los modelos MoE bajan la memoria necesaria. Se paga GPU fija en vez de tokens.", "hitos": [["jun 2023", "vLLM y PagedAttention"], ["2023", "Cuantización GPTQ"], ["2023", "Cuantización AWQ"], ["nov 2023", "Servir muchos adapters LoRA a la vez"], ["dic 2023", "Mixtral, modelo MoE abierto"], ["ene 2025", "DeepSeek R1"], ["ago 2025", "gpt-oss"]], "medir": ["Costo por millón de tokens.", "Uso de las GPUs.", "Latencia p95."], "seg": "Los datos ya no salen al proveedor. A cambio, hay que confiar en los modelos que se descargan.", "why": "Hay que operar GPUs, capacidad y actualizaciones de modelos.", "sec": [{"id": "dat", "n": "Datos al proveedor", "st": "ok", "stl": "Resuelto", "rel": "resuelve", "d": "Con self-hosting los datos se quedan en tu infraestructura."}, {"id": "sup", "n": "Safetensors", "st": "med", "stl": "Parcial", "rel": "abre", "d": "Safetensors evita que un modelo ejecute código; la procedencia y las puertas traseras siguen sin resolver."}]}, "13": {"t": "IA local", "when": "aparece 2023 · uso real 2025", "neck": "confianza y operación", "tools": ["Ollama", "llama.cpp", "LM Studio", "MLX"], "lleva": ["Decide qué tareas van en local: datos sensibles o sin red", "Un catálogo de modelos aprobados", "Las mismas herramientas MCP en local y en la nube"], "ej": "Alguien resume logs con datos sensibles en su laptop y nada sale de la máquina.", "err": "Descargar cualquier modelo de internet sin inventario ni verificación.", "lead": "Modelos y agentes corren en la laptop o en el edge: sin costo por token, sin red y sin que los datos salgan de la máquina. Los modelos Hermes trajeron tool calling a modelos que corren en local.", "hitos": [["mar 2023", "llama.cpp"], ["jul 2023", "Ollama"], ["ago 2023", "Formato GGUF"], ["dic 2023", "MLX"], ["mar 2024", "Hermes 2 Pro con tool calling"], ["may 2024", "PCs con NPU"], ["ago 2024", "Hermes 3"]], "medir": ["Porcentaje de tareas resueltas en local.", "Ahorro frente a la nube.", "Calidad frente a la nube en las mismas evals."], "seg": "Cientos de modelos en máquinas que no controlas: hace falta inventario y verificar de dónde viene cada modelo.", "why": "Hay que confiar en muchos agentes y modelos repartidos por toda la empresa.", "sec": []}, "14": {"t": "Hoy", "when": "", "neck": "atención humana", "tools": [], "lleva": ["Mide qué aprobaciones son rutinarias", "Automatízalas con clasificadores", "Traza cada acción hasta una persona"], "ej": "Un clasificador deja pasar las acciones rutinarias del agente y le pide permiso a una persona solo para las riesgosas, como un merge.", "err": "Aprobar todo por cansancio: la aprobación humana deja de ser un control.", "lead": "El último cuello de botella es la atención humana: aprobar y decidir. Ya no lo mueve un modelo mejor. Lo mueve poder confiar en lo que hacen los agentes, y eso viene de la pista de seguridad.", "hitos": [], "medir": ["Aprobaciones humanas por cambio.", "Errores de los agentes que llegaron a producción."], "seg": "", "why": "", "sec": [{"id": "cls", "n": "Guardrails", "st": "med", "stl": "Parcial", "rel": "falta", "d": "Clasificadores de entrada y salida: paran ataques conocidos, no los nuevos."}, {"id": "trz", "n": "Trazabilidad", "st": "med", "stl": "Parcial", "rel": "falta", "d": "Langfuse, LangSmith y OpenTelemetry muestran qué hizo cada agente: tool calls, permisos y resultados. Falta el porqué y quién lo delegó."}, {"id": "idn", "n": "Identidad de agentes", "st": "crit", "stl": "Abierto", "rel": "falta", "d": "Permisos delegados, mínimo privilegio y revocación para agentes."}]}};
+  var XS = [96.0, 185.2, 274.3, 363.5, 452.7, 541.8, 631.0, 720.2, 809.3, 898.5, 987.7, 1076.8, 1166.0, 1330];
+  var YT = 110, X0 = 44, LAST = 14;
+  var STEP = 0, SEL = 0;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, a) { var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); return n; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  var REL = { abre: "abre", resuelve: "resuelve", pieza: "misma pieza", habilita: "habilitado por", falta: "falta" };
+  function li(a) { return a.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join(""); }
+  function detail(i) {
+    var box = document.getElementById("detail");
+    if (!i) { box.innerHTML = '<p class="empty">Toca un paso, o presenta con ▶.</p>'; return; }
+    var d = DETAIL[i];
+    var tools = d.tools.map(function (t) { return '<span class="tool">' + esc(t) + '</span>'; }).join("");
+    var sec = d.sec.map(function (s) {
+      return '<div class="segl"><span class="badge b-' + s.st + '">' + s.stl + '</span><b>' + esc(s.n) + '</b></div>';
+    }).join("");
+    var hitos = d.hitos.map(function (h) { return '<li><span class="hd">' + esc(h[0]) + '</span>' + esc(h[1]) + '</li>'; }).join("");
+    var secn = d.sec.map(function (s) { return '<li><b>' + esc(s.n) + ' (' + REL[s.rel] + ', ' + s.stl.toLowerCase() + ').</b> ' + esc(s.d) + '</li>'; }).join("");
+    var secl = d.sec.map(function (s) {
+      return '<div class="segi"><div class="segl"><span class="badge b-' + s.st + '">' + s.stl + '</span><b>' + esc(s.n) + '</b></div><p>' + esc(s.d) + '</p></div>';
+    }).join("");
+    box.innerHTML =
+      '<div class="s-head">' +
+        '<div class="s-title"><div class="s-k">' + (i === LAST ? "Hoy" : "Paso " + i) + '</div><h3>' + esc(d.t) + '</h3>' +
+          (d.when ? '<div class="s-when">' + esc(d.when) + '</div>' : '') + '</div>' +
+        '<div class="s-lead"><p>' + esc(d.lead) + '</p>' + (tools ? '<div class="tools">' + tools + '</div>' : '') + '</div>' +
+      '</div>' +
+      '<div class="s-strip">' +
+        '<div class="ej"><div class="s-lbl">En la práctica</div><p>' + esc(d.ej) + '</p></div>' +
+        '<div class="err"><div class="s-lbl">Error común</div><p>' + esc(d.err) + '</p></div>' +
+      '</div>' +
+      '<div class="s-cols">' +
+        (hitos ? '<div><div class="s-lbl">Hitos</div><ul class="hitos">' + hitos + '</ul></div>' : '') +
+        '<div class="s-take"><div class="s-lbl">Llévate esto</div><ul>' + li(d.lleva) + '</ul>' +
+          '<div class="s-lbl s-gap">Cómo saber si funciona</div><ul class="plain">' + li(d.medir) + '</ul></div>' +
+        '<div>' + (secl || d.seg ? '<div class="s-lbl">Seguridad</div>' + (d.seg && !secl ? '<p class="segn">' + esc(d.seg) + '</p>' : '') + secl : '') +
+          '<div class="s-neck"><div class="s-lbl">' + (d.why ? 'El cuello salta a' : 'El cuello') + '</div><div class="nk">' + esc(d.neck) + '</div>' +
+          (d.why ? '<p>' + esc(d.why) + '</p>' : '') + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  function paint() {
+    document.querySelectorAll("#zsvg [data-i]").forEach(function (g) {
+      var i = +g.getAttribute("data-i");
+      g.classList.toggle("dim", !!STEP && i > STEP);
+      g.classList.toggle("cur", (STEP || SEL) === i);
+    });
+    var sn = document.getElementById("snake");
+    while (sn.firstChild) sn.removeChild(sn.firstChild);
+    if (STEP) {
+      var hx = XS[STEP - 1], y = YT;
+      if (STEP === LAST) { y = 195; }
+      sn.appendChild(el("path", { d: "M" + X0 + "," + (YT - 50) + " H" + (hx - 10), "class": "snake-body" }));
+      sn.appendChild(el("rect", { x: hx - 10, y: y - 60, width: 20, height: 20, rx: 5, "class": "snake-head" }));
+      sn.appendChild(el("rect", { x: hx + 2, y: y - 56, width: 4, height: 4, "class": "snake-eye" }));
+      sn.appendChild(el("rect", { x: hx + 2, y: y - 48, width: 4, height: 4, "class": "snake-eye" }));
+      if (STEP < LAST) {
+        var fx = XS[STEP], fy = STEP + 1 === LAST ? 195 : YT;
+        sn.appendChild(el("rect", { x: fx - 7, y: fy - 57, width: 14, height: 14, rx: 3, "class": "food" }));
+      }
+    }
+    detail(STEP || SEL);
+    var on = !!STEP;
+    document.body.classList.toggle("presenting", on);
+    document.getElementById("b-mode").textContent = on ? "Ver todo" : "Presentar";
+    ["b-prev", "pos", "b-next"].forEach(function (id) { document.getElementById(id).hidden = !on; });
+    document.getElementById("hint").hidden = on;
+    document.getElementById("pos").textContent = on ? (STEP === LAST ? "Hoy" : "Paso " + STEP + " de " + (LAST - 1)) : "";
+  }
+  function go(d) { STEP = Math.min(LAST, Math.max(1, STEP + d)); paint(); }
+  document.getElementById("b-mode").addEventListener("click", function () { STEP = STEP ? 0 : 1; SEL = 0; paint();
+    if (STEP) document.getElementById("ctrl-anchor").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  document.getElementById("b-prev").addEventListener("click", function () { go(-1); });
+  document.getElementById("b-next").addEventListener("click", function () { go(1); });
+  document.querySelectorAll("#zsvg [data-sel]").forEach(function (g) {
+    function pick() { var i = +g.getAttribute("data-sel"); if (STEP) STEP = i; else SEL = (SEL === i ? 0 : i); paint(); }
+    g.addEventListener("click", pick);
+    g.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick(); } });
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (!STEP) return;
+    if (ev.key === "ArrowRight" || ev.key === "PageDown") { ev.preventDefault(); go(1); }
+    else if (ev.key === "ArrowLeft" || ev.key === "PageUp") { ev.preventDefault(); go(-1); }
+    else if (ev.key === "Escape") { STEP = 0; paint(); }
+  });
+  paint();
+})();
+</script>

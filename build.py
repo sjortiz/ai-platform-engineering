@@ -1,4 +1,4 @@
-"""Genera index.html, por-anos.html y en/ a partir de src/: python3 build.py"""
+"""Genera por-anos.html, espacio.html y en/ a partir de src/: python3 build.py"""
 import json
 import subprocess
 import sys
@@ -53,8 +53,7 @@ def build(script, src_html, out):
     return missing
 
 
-missing = set(build("zip3.py", "cremallera.html", "index.html"))
-missing |= set(build("zip3_anos.py", "cremallera-anos.html", "por-anos.html"))
+missing = set(build("zip3_anos.py", "cremallera-anos.html", "por-anos.html"))
 missing |= set(build("zip3_espacio.py", "cremallera-espacio.html", "espacio.html"))
 if missing:
     print(f"\n{len(missing)} textos sin traducción en i18n/en.json (quedan en español en en/):", file=sys.stderr)
