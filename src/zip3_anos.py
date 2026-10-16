@@ -35,15 +35,14 @@ for ci in range(len(P2.CAPS)):
 POS.append(dict(k="hoy", i=N + 1, cc=len(P2.CAPS) - 1))
 POS.append(dict(k="mapa", i=N + 2, cc=len(P2.CAPS) - 1))
 
-# Minimapa: un tablero de excavación con la lógica de Espacio. Cada parada queda en su año (x) y se
-# reparte a lo alto del tablero; la posición sale de una relajación con semilla fija y se ajusta a la
-# cuadrícula. Arriba, la línea de tiempo con los años.
+# Minimapa: una excavación lineal, como viajar en el tiempo. Cada parada queda en su año (x) y en el
+# carril de su tipo; la serpiente usa la búsqueda en cuadrícula de Por dimensión para no cruzarse.
 G = 16
 MW, MH = 1920, 256
 TLY = 36
-ROW0, ROW1 = 4, 14  # filas libres debajo de los años
-RND = random.Random(11)
-RAD = dict(portada=10, avance=19, hoy=28, seg=13, glos=7, cap=8, xa=5, xs=5)
+# Carriles (centro de celda): extras arriba, pasos, seguridad y sus preguntas abajo. Entre pasos y
+# seguridad queda una fila libre para que pase la serpiente.
+YA, YM, YS, YZ = 72, 120, 184, 232
 
 
 def pts(xy):
@@ -60,8 +59,9 @@ def tablet(x, y):
 def pin(x, y):
     """Banderín de excavación: alambre clavado en la tierra con un paño triangular."""
     px, top, bot = x - 6, y - 16, y + 14
+    delay = f' style="animation-delay:-{(x * 7 % 260) / 100:.2f}s"'
     cloth = f"M{px},{top} C{px + 8},{top - 2} {px + 14},{top + 4} {px + 20},{top + 6} C{px + 13},{top + 8} {px + 7},{top + 12} {px},{top + 13} Z"
-    return (f'<g class="blk pin"><path class="cloth" d="{cloth}"/>'
+    return (f'<g class="blk pin"><path class="cloth" d="{cloth}"{delay}/>'
             f'<path class="pole" d="M{px},{top - 1} V{bot}"/><path class="base" d="M{px - 5},{bot} q5,-3 10,0"/></g>')
 
 
@@ -73,7 +73,7 @@ def shard(x, y, r=9):
     a0 = SHARD.uniform(0, math.pi)
     xy = [(x + math.cos(a0 + j * math.pi / 3) * r * SHARD.uniform(.7, 1.15),
            y + math.sin(a0 + j * math.pi / 3) * r * SHARD.uniform(.7, 1.15)) for j in range(6)]
-    return f'<polygon class="sq" points="{pts(xy)}"/>'
+    return f'<polygon class="sq" points="{pts(xy)}" style="animation-delay:-{SHARD.uniform(0, 3.2):.2f}s"/>'
 
 
 # Fondo: estratos de tierra a todo el ancho de la franja, con piedritas y algún fósil (decorativo).
@@ -110,6 +110,8 @@ DIG_SVG = (f'<svg class="skybg digbg" viewBox="0 0 {DW} {DH}" preserveAspectRati
                      f'ry="{DIG.uniform(1, 3.5):.1f}" opacity="{DIG.uniform(.15, .45):.2f}"/>' for _ in range(340))
            + "".join(ammonite(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(10, 18)) for _ in range(14))
            + "".join(bone(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(.7, 1.2), DIG.uniform(0, 180)) for _ in range(10))
+           + "".join(f'<circle class="mote" cx="{DIG.uniform(0, DW):.0f}" cy="{DIG.uniform(10, DH - 10):.0f}" r="{DIG.uniform(1.2, 2.6):.1f}" '
+                     f'style="animation-duration:{DIG.uniform(7, 14):.1f}s;animation-delay:-{DIG.uniform(0, 14):.1f}s"/>' for _ in range(90))
            + "</svg>")
 
 NCAP = len(P2.CAPS)
@@ -136,74 +138,22 @@ def nid(q):
             "seg": f"s{q.get('t')}"}.get(q["k"], f"a{q.get('i')}")
 
 
-# Los pasos y la seguridad saltan 2–6 filas respecto de la parada anterior; capítulos y vocabulario
-# siguen la fila de la anterior. Extras y preguntas van al lado con más lugar.
-NODES, SUPOF = {}, {}
-ROWS = list(range(ROW0 * G + G // 2, ROW1 * G + G // 2 + 1, G))
-y = 152
+# Cada parada al centro de una celda de su carril, en orden y con lugar entre una y otra.
+NODES, SUPOF, last = {}, {}, {}
 for q in SEQ:
-    if q["k"] in ("avance", "seg", "hoy"):
-        y = RND.choice([v for v in ROWS if 32 <= abs(v - y) <= 96])
-    NODES[nid(q)] = dict(k=q["k"], xy=[q["sx"], y])
-NODES["start"] = dict(k="portada", xy=[34, NODES[nid(SEQ[0])]["xy"][1]])
+    y = YS if q["k"] == "seg" else YM
+    cx = max(round((q["sx"] - G / 2) / G), last.get(y, -9) + 3)
+    last[y] = cx
+    NODES[nid(q)] = dict(k=q["k"], xy=[cx * G + G // 2, y])
+NODES["start"] = dict(k="portada", xy=[40, YM])
 for q in SEQ:
-    x, y = NODES[nid(q)]["xy"]
-    sd = -1 if y >= 152 else 1
+    x = NODES[nid(q)]["xy"][0]
     if q["k"] == "avance" and q["i"] in SUPA:
-        NODES[f"xa{q['i']}"] = dict(k="xa", xy=[x, y + 44 * sd])
+        NODES[f"xa{q['i']}"] = dict(k="xa", xy=[x, YA])
         SUPOF[f"xa{q['i']}"] = nid(q)
     if q["k"] == "seg" and q["n"] == q["c"] - 1 and q["i"] in SUPS:
-        NODES[f"xs{q['i']}"] = dict(k="xs", xy=[x, y + 40 * sd])
+        NODES[f"xs{q['i']}"] = dict(k="xs", xy=[x, YZ])
         SUPOF[f"xs{q['i']}"] = nid(q)
-
-ids = list(NODES)
-HOME = {n: list(NODES[n]["xy"]) for n in ids}
-for _ in range(400):
-    mv = {n: [0.0, 0.0] for n in ids}
-    for n in ids:
-        if NODES[n]["k"] not in ("xa", "xs"):  # cada parada vuelve a su año y a su fila
-            mv[n][0] += (HOME[n][0] - NODES[n]["xy"][0]) * .3
-            mv[n][1] += (HOME[n][1] - NODES[n]["xy"][1]) * .2
-    for u in range(len(ids)):
-        for v in range(u + 1, len(ids)):
-            a, b = ids[u], ids[v]
-            (xa, ya), (xb, yb) = NODES[a]["xy"], NODES[b]["xy"]
-            dx, dy = xb - xa, yb - ya
-            d = math.hypot(dx, dy) or .01
-            want = RAD[NODES[a]["k"]] + RAD[NODES[b]["k"]] + 16
-            if d < want:
-                f = (want - d) / 2 / d
-                mv[a][0] -= dx * f; mv[a][1] -= dy * f
-                mv[b][0] += dx * f; mv[b][1] += dy * f
-    for sat, par in SUPOF.items():
-        (xp, yp), (xs, ys) = NODES[par]["xy"], NODES[sat]["xy"]
-        d = math.hypot(xs - xp, ys - yp) or .01
-        f = (40 - d) / d * .5
-        mv[sat][0] += (xs - xp) * f; mv[sat][1] += (ys - yp) * f
-    for n in ids:
-        k, xy = NODES[n]["k"], NODES[n]["xy"]
-        if k in ("portada", "avance"):  # los pasos quedan fijos: son el esqueleto del recorrido
-            continue
-        xy[0] += mv[n][0] * .5
-        xy[1] += mv[n][1] * .5
-        r = RAD[k] + 4
-        xy[0] = min(MW - r, max(r, xy[0]))
-        xy[1] = min(ROW1 * G + G - r, max(ROW0 * G + r, xy[1]))
-# Cada parada al centro de una celda libre; los bloques grandes dejan un pasillo alrededor.
-used = set()
-for n in sorted(ids, key=lambda n: -RAD[NODES[n]["k"]]):
-    x, y = NODES[n]["xy"]
-    cx, cy = round((x - G / 2) / G), round((y - G / 2) / G)
-    for span in (6, 12, 24):
-        cands = sorted(((cx + dx, cy + dy) for dx in range(-span, span + 1) for dy in range(-10, 11)
-                        if ROW0 <= cy + dy <= ROW1 and 1 <= cx + dx <= MW // G - 2 and (cx + dx, cy + dy) not in used),
-                       key=lambda c: abs(c[0] - cx) + abs(c[1] - cy))
-        if cands:
-            break
-    c = cands[0]
-    r = 2 if NODES[n]["k"] in ("avance", "seg", "hoy") else 1
-    used.update((c[0] + dx, c[1] + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1))
-    NODES[n]["xy"] = [c[0] * G + G // 2, c[1] * G + G // 2]
 
 for p in POS:
     p["node"] = nid(p)
@@ -239,6 +189,7 @@ for i in SUPS:
     mini.append(f'<g class="msup" data-sup="s" data-i="{i}" tabindex="0" role="button" aria-label="Preguntas de seguridad del paso {i}">'
                 f'<rect class="hit" x="{x - 12}" y="{y - 12}" width="24" height="24"/>'
                 f'{shard(x, y)}</g>')
+GHOSTX = []
 for idx, p in enumerate(POS):
     if p["k"] in ("portada", "mapa"):
         continue
@@ -262,14 +213,19 @@ for idx, p in enumerate(POS):
         mini.append(f'<g class="mdot seg" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
                     f'<rect class="hit" x="{x - 18}" y="{y - 20}" width="36" height="40"/>{pin(x, y)}</g>')
         continue
-    # Fantasma punteado en el año en que la tecnología aparece, unido a la tablilla del año de uso real.
+    # Fantasma punteado sobre la línea de tiempo, en el año en que la tecnología aparece; en la parada
+    # actual se une a la tablilla del año de uso real.
     ap = re.search(r"aparece (\d{4})", zip2.STEPS[p["i"] - 1]["when"])
     ghost = ""
-    if ap and year_x(int(ap.group(1))) < x - 24:
+    if ap:
         ax = year_x(int(ap.group(1)))
-        ghost = (f'<g class="ghost"><path class="gl" d="M{ax + 9},{y} H{x - 16}"/>'
-                 f'<rect class="gt" x="{ax - 9}" y="{y - 11}" width="18" height="22" rx="3"/>'
-                 f'<text class="gy" x="{ax}" y="{y - 16}" text-anchor="middle">{ap.group(1)}</text></g>')
+        while any(abs(ax - g) < 14 for g in GHOSTX):
+            ax += 15
+        GHOSTX.append(ax)
+        gy = TLY + 13
+        ghost = (f'<g class="ghost"><path class="gl" d="M{ax},{gy + 7} L{x - 14},{y - 10}"/>'
+                 f'<rect class="gt" x="{ax - 6}" y="{gy - 7}" width="12" height="14" rx="2"/>'
+                 f'<text class="gy" x="{ax}" y="{gy + 24}" text-anchor="middle">{ap.group(1)}</text></g>')
     mini.append(f'<g class="mdot avance" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">{ghost}'
                 f'<rect class="hit" x="{x - 18}" y="{y - 20}" width="36" height="40"/>'
                 f'{tablet(x, y)}<text class="mnum" x="{x}" y="{y + 4}" text-anchor="middle">{p["i"]}</text></g>')
@@ -666,7 +622,7 @@ page = f"""<title>AI Platform Engineering</title>
     .cols{{grid-template-columns:minmax(0,1fr)}}
   }}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
-  /* Tema arqueológico: el minimapa es una excavación, igual de alto que el cielo de Espacio. */
+  /* Tema arqueológico: el minimapa es una excavación, igual de alto que el cielo de Por dimensión. */
   .mini{{max-height:185px;max-width:none}}
   @media (max-height:820px){{.mini{{max-height:120px}}}}
   .minibox{{position:relative;overflow:hidden;background:#e4cfa3;border-bottom-color:#b98b57}}
@@ -684,7 +640,7 @@ page = f"""<title>AI Platform Engineering</title>
   .mnum{{fill:#7c2d12;pointer-events:none}} .mdot.cur .mnum{{fill:#1c1917}} .mini .mdot.done .mnum{{fill:#fff7e6}}
   .medge{{fill:none;stroke:#7a5a36;stroke-width:1.6;stroke-dasharray:2 4;opacity:.55}}
   /* Aparece (fantasma punteado) → uso real (tablilla): se enciende en la parada actual. */
-  .ghost .gl{{fill:none;stroke:#9a3412;stroke-width:1.6;stroke-dasharray:2 5;opacity:.4;transition:opacity .3s}}
+  .ghost .gl{{fill:none;stroke:#9a3412;stroke-width:1.6;stroke-dasharray:2 5;opacity:0;transition:opacity .3s}}
   .ghost .gt{{fill:#f8ecd2;fill-opacity:.4;stroke:#9a3412;stroke-width:1.5;stroke-dasharray:3 3;opacity:.55;transition:opacity .3s}}
   .ghost .gy{{font:650 14px var(--sans);fill:#7c2d12;opacity:0;transition:opacity .3s}}
   .mdot.cur .ghost .gl,.mdot.cur .ghost .gt,.mdot.cur .ghost .gy{{opacity:1}}
@@ -695,9 +651,24 @@ page = f"""<title>AI Platform Engineering</title>
   .mini .pin .cloth{{fill:#fde68a;stroke:#b45309;stroke-width:1.6;stroke-linejoin:round;transform-box:fill-box;transform-origin:left center}}
   .mini .pin .pole,.mini .pin .base{{fill:none;stroke:#57534e;stroke-width:2.2;stroke-linecap:round}}
   .mini .mdot.seg.done .pin .cloth{{fill:#f59e0b}}
-  .mini .mdot.cur .pin .cloth{{stroke:#1c1917;animation:wave 1.4s ease-in-out infinite}}
+  .mini .pin .cloth{{animation:wave 2.6s ease-in-out infinite}}
+  .mini .mdot.cur .pin .cloth{{stroke:#1c1917;animation-duration:1.2s}}
   @keyframes wave{{50%{{transform:skewY(-6deg) scaleX(.92)}}}}
-  @media (prefers-reduced-motion: reduce){{.mini .mdot.cur .pin .cloth{{animation:none}}}}
+  /* Movimiento: polvo que flota, fragmentos que brillan y se desentierran cuando la serpiente pasa cerca,
+     rastro de arena, la unión aparece → uso real que camina y el capítulo actual que late. */
+  .digbg .mote{{fill:#fffaf0;opacity:.6;animation:drift 10s ease-in-out infinite alternate}}
+  @keyframes drift{{0%{{transform:translate(0,0)}}50%{{transform:translate(26px,-9px)}}100%{{transform:translate(52px,3px)}}}}
+  .msup{{opacity:var(--near,.6);transition:opacity .25s}}
+  .msup.avail,.msup.cur{{opacity:1}}
+  .msup .sq{{transform-box:fill-box;transform-origin:center;animation:glint 3.2s ease-in-out infinite}}
+  @keyframes glint{{50%{{opacity:.6;transform:scale(.88) rotate(8deg)}}}}
+  .snake-dust{{fill:none;stroke:#f5e6c8;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:0 11 0 7 0 15;animation:dust 1.8s linear infinite}}
+  @keyframes dust{{to{{stroke-dashoffset:33}}}}
+  .mdot.cur .ghost .gl{{animation:ants 1s linear infinite}}
+  @keyframes ants{{to{{stroke-dashoffset:-14}}}}
+  .tlcap.cur .tlseg{{animation:beat 2s ease-in-out infinite}}
+  @keyframes beat{{50%{{stroke-opacity:.45}}}}
+  @media (prefers-reduced-motion: reduce){{.mini .pin .cloth,.digbg .mote,.msup .sq,.snake-dust,.mdot.cur .ghost .gl,.tlcap.cur .tlseg{{animation:none}}}}
   .msup .sq{{fill:#fff7e6;stroke:#a16207;stroke-width:1.6;stroke-linejoin:round}}
   .msup[data-sup="s"] .sq{{fill:#fde68a;stroke:#b45309}}
   .msup.big .sq{{stroke:#9a3412;stroke-width:2.2}}
@@ -749,7 +720,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="espacio.html">Espacio</a><span aria-current="page">Por años</span></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="por-dimension.html">Por dimensión</a><span aria-current="page">Por años</span></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -781,7 +752,7 @@ page = f"""<title>AI Platform Engineering</title>
 
   // Serpiente: un solo trazo con toda la ruta; se revela hasta la posición actual y la cabeza recorre el trazo.
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var SG = document.getElementById("msnake"), BODY, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
+  var SG = document.getElementById("msnake"), BODY, DUST, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
   // Serpiente con rastro: cada movimiento agrega un tramo desde la cabeza; los desvíos quedan en el camino.
   var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null, SHRINK = 0;
   function sample(path, total) {{
@@ -876,7 +847,7 @@ page = f"""<title>AI Platform Engineering</title>
     }}
     return d;
   }}
-  // Un tramo por parada, como en Espacio; dir es la flecha con la que se entra a un extra.
+  // Un tramo por parada, como en Por dimensión; dir es la flecha con la que se entra a un extra.
   function extendTo(id, key, dir) {{
     var top = STACK[STACK.length - 1], was = TOTAL, cut = SHRINK, s = hopPath(top.xy, id, dir || heading(), top.id, true);
     if (s) setTrail(TRD + s);
@@ -897,6 +868,7 @@ page = f"""<title>AI Platform Engineering</title>
   function initSnake() {{
     BODY = el("path", {{ d: "M0,0", "class": "snake-geo" }});
     WIG = el("path", {{ d: "M0,0", "class": "snake-body" }});
+    DUST = el("path", {{ d: "M0,0", "class": "snake-dust" }});
     FOOD = el("rect", {{ width: 14, height: 14, rx: 3, "class": "food" }});
     FX = el("g", {{}});
     HEAD = el("g", {{}});
@@ -906,7 +878,7 @@ page = f"""<title>AI Platform Engineering</title>
     inner.appendChild(el("rect", {{ x: 1.5, y: -5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
     inner.appendChild(el("rect", {{ x: 1.5, y: 1.5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
     HEAD.appendChild(inner); HEADIN = inner;
-    SG.appendChild(BODY); SG.appendChild(FOOD); SG.appendChild(WIG); SG.appendChild(HEAD); SG.appendChild(FX);
+    SG.appendChild(BODY); SG.appendChild(FOOD); SG.appendChild(WIG); SG.appendChild(DUST); SG.appendChild(HEAD); SG.appendChild(FX);
     resetTrail();
   }}
   // Como en Snake: el cuerpo tiene un largo que crece con lo que come y la cola sigue a la cabeza.
@@ -922,7 +894,20 @@ page = f"""<title>AI Platform Engineering</title>
     }}
     return d || "M0,0";
   }}
-  function drawBody(now) {{ WIG.setAttribute("d", CUR > 1 ? wave(SAMP, CUR, now / 170, REDUCED ? 0 : 1.2) : "M0,0"); }}
+  function drawBody(now) {{
+    var d = CUR > 1 ? wave(SAMP, CUR, now / 170, REDUCED ? 0 : 1.2) : "M0,0";
+    WIG.setAttribute("d", d); DUST.setAttribute("d", d);
+  }}
+  // Los fragmentos están medio enterrados y se ven enteros cuando la serpiente pasa cerca.
+  var SHARDS = null;
+  function uncover(x, y) {{
+    SHARDS = SHARDS || [].slice.call(document.querySelectorAll(".msup")).map(function (m) {{
+      return [m, D.nodes["x" + m.getAttribute("data-sup") + m.getAttribute("data-i")]];
+    }});
+    SHARDS.forEach(function (s) {{
+      s[0].style.setProperty("--near", Math.max(.55, 1 - Math.hypot(s[1][0] - x, s[1][1] - y) / 420).toFixed(2));
+    }});
+  }}
   function tick(now) {{ drawBody(now); if (!REDUCED) requestAnimationFrame(tick); }}
   function burst(xy, cls) {{
     if (REDUCED) return;
@@ -942,7 +927,7 @@ page = f"""<title>AI Platform Engineering</title>
     var a = len > 3 ? BODY.getPointAtLength(len - 3) : pt, b = len > 3 ? pt : BODY.getPointAtLength(Math.min(TOTAL, len + 3));
     var ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     HEAD.setAttribute("transform", "translate(" + pt.x + "," + pt.y + ") rotate(" + ang + ")");
-    follow(pt.x);
+    follow(pt.x); uncover(pt.x, pt.y);
     if (REDUCED) drawBody(0);
   }}
   function placeFood() {{

@@ -1,4 +1,4 @@
-"""Vista Espacio: genera cremallera-espacio.html, la presentación con el minimapa como grafo en el espacio.
+"""Vista Por dimensión: genera cremallera-dimension.html, la presentación con el minimapa como grafo en el espacio.
 
 Basado en zip3.py: minimapa con la serpiente como índice,
 una slide por posición (avance y, si aplica, su seguridad) y el mapa completo al final."""
@@ -699,7 +699,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Espacio</span><a href="por-anos.html">Por años</a></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por dimensión</span><a href="por-anos.html">Por años</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -1404,5 +1404,5 @@ page = f"""<title>AI Platform Engineering</title>
 </script>
 """
 
-(HERE / "cremallera-espacio.html").write_text('<meta charset="utf-8">\n' + page)  # el prototipo se abre suelto, sin build.py
+(HERE / "cremallera-dimension.html").write_text('<meta charset="utf-8">\n' + page)  # el prototipo se abre suelto, sin build.py
 print(len(page), "posiciones:", len(POS))
