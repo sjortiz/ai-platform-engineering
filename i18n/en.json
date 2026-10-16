@@ -1191,7 +1191,7 @@
  "img/shailyn.webp\" alt=\"Shailyn Ortiz\" width=\"400\" height=\"400\"></span>": "img/shailyn.webp\" alt=\"Shailyn Ortiz\" width=\"400\" height=\"400\"></span>",
  "<li><b>Compliance como guardrails:</b> controles y remediación automática dentro del flujo del desarrollador.</li>": "<li><b>Compliance as guardrails:</b> controls and automatic remediation inside the developer workflow.</li>",
  "<h1>Shailyn Ortiz</h1><h2 class=\"csub\">Staff DevSecOps (L6) <span class=\"amp\">&amp;</span> Platform Engineer</h2><div class=\"byline\">Platform + AI + Security <span>·</span> ex Senior SDET</div>": "<h1>Shailyn Ortiz</h1><h2 class=\"csub\">Staff DevSecOps (L6) <span class=\"amp\">&amp;</span> Platform Engineer</h2><div class=\"byline\">Platform + AI + Security <span>·</span> ex Senior SDET</div>",
- "<ul class=\"does\"><li><b>Agentes de IA para seguridad:</b> threat hunting e incidentes, con RAG y modelos propios (vLLM, EKS).</li>": "<ul class=\"does\"><li><b>AI agents for security:</b> threat hunting and incidents, with RAG and self-hosted models (vLLM, EKS).</li>",
  "<li><b>Pipelines más rápidos:</b> deploys casi instantáneos y rollbacks casi instantáneos.</li></ul>": "<li><b>Faster pipelines:</b> near-instant deploys and near-instant rollbacks.</li></ul>",
- "<p class=\"hook\">Más de 10 años optimizando plataformas.</p>": "<p class=\"hook\">More than 10 years optimizing platforms.</p>"
+ "<p class=\"hook\">Más de 10 años optimizando plataformas.</p>": "<p class=\"hook\">More than 10 years optimizing platforms.</p>",
+ "<ul class=\"does\"><li><b>IA agéntica:</b> threat hunting, incidentes, RAG, observabilidad y más.</li>": "<ul class=\"does\"><li><b>Agentic AI:</b> threat hunting, incidents, RAG, observability and more.</li>"
 }
