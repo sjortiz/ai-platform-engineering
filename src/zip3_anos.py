@@ -2,6 +2,8 @@
 una slide por posición (avance y, si aplica, su seguridad) y el mapa completo al final."""
 import html
 import json
+import math
+import random
 from pathlib import Path
 
 from detalle import SECX, ADVX, EXTRA, SECHITOS, SECEX, GLOS, SUPA, SUPS
@@ -33,12 +35,78 @@ POS.append(dict(k="hoy", i=N + 1, cc=len(P2.CAPS) - 1))
 POS.append(dict(k="mapa", i=N + 2, cc=len(P2.CAPS) - 1))
 
 # Minimapa
-MW, MH = 1400, 180
+MW, MH = 1400, 256
 MX0, MXN, MXHOY = 70, 1190, 1336
-TLY = 16
-MYA, MYT, MYB, MYZ = 44, 84, 128, 166
+TLY = 34
+MYA, MYT, MYB, MYZ = 82, 140, 196, 234
 MYH = (MYT + MYB) // 2
 
+
+def pts(xy):
+    return " ".join(f"{a:.1f},{b:.1f}" for a, b in xy)
+
+
+def tablet(x, y):
+    """Tablilla de arcilla con marcas grabadas."""
+    marks = f"M{x - 7},{y - 8} h6 M{x + 2},{y - 8} h5 M{x - 7},{y - 1} h3 M{x - 1},{y - 1} h8 M{x - 7},{y + 6} h9 M{x + 5},{y + 6} h2"
+    return (f'<g class="blk tab"><rect class="tb" x="{x - 14}" y="{y - 17}" width="28" height="34" rx="5"/>'
+            f'<path class="cu" d="{marks}"/></g>')
+
+
+def pin(x, y):
+    """Banderín de excavación: alambre clavado en la tierra con un paño triangular."""
+    px, top, bot = x - 6, y - 16, y + 14
+    cloth = f"M{px},{top} C{px + 8},{top - 2} {px + 14},{top + 4} {px + 20},{top + 6} C{px + 13},{top + 8} {px + 7},{top + 12} {px},{top + 13} Z"
+    return (f'<g class="blk pin"><path class="cloth" d="{cloth}"/>'
+            f'<path class="pole" d="M{px},{top - 1} V{bot}"/><path class="base" d="M{px - 5},{bot} q5,-3 10,0"/></g>')
+
+
+SHARD = random.Random(3)
+
+
+def shard(x, y, r=9):
+    """Fragmento de cerámica: un polígono irregular."""
+    a0 = SHARD.uniform(0, math.pi)
+    xy = [(x + math.cos(a0 + j * math.pi / 3) * r * SHARD.uniform(.7, 1.15),
+           y + math.sin(a0 + j * math.pi / 3) * r * SHARD.uniform(.7, 1.15)) for j in range(6)]
+    return f'<polygon class="sq" points="{pts(xy)}"/>'
+
+
+# Fondo: estratos de tierra a todo el ancho de la franja, con piedritas y algún fósil (decorativo).
+DIG = random.Random(7)
+DW, DH = 3000, 260
+LAYERS = ["#f1e4c6", "#ebdab6", "#e4cfa3", "#dcc190", "#d2b27e", "#c6a26c"]
+
+
+def wavy(y0, amp):
+    d, x = f"M0,{y0:.0f}", 0
+    while x < DW:
+        nx = x + DIG.uniform(160, 320)
+        d += f" Q{(x + nx) / 2:.0f},{y0 + DIG.uniform(-amp, amp):.0f} {nx:.0f},{y0 + DIG.uniform(-amp / 2, amp / 2):.0f}"
+        x = nx
+    return d + f" V{DH} H0 Z"
+
+
+def ammonite(x, y, r):
+    d = " ".join(f"{'M' if k == 0 else 'L'}{x + math.cos(t) * r * t / 12:.1f},{y + math.sin(t) * r * t / 12:.1f}"
+                 for k, t in enumerate([j * .3 for j in range(41)]))
+    return f'<path class="fossil" d="{d}"/>'
+
+
+def bone(x, y, s, a):
+    return (f'<g class="fossil" transform="translate({x:.0f},{y:.0f}) rotate({a:.0f}) scale({s:.2f})">'
+            f'<path d="M-14,0 H14"/><circle cx="-15" cy="-3" r="3"/><circle cx="-15" cy="3" r="3"/>'
+            f'<circle cx="15" cy="-3" r="3"/><circle cx="15" cy="3" r="3"/></g>')
+
+
+DIG_SVG = (f'<svg class="skybg digbg" viewBox="0 0 {DW} {DH}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'
+           + f'<rect width="{DW}" height="{DH}" fill="{LAYERS[0]}"/>'
+           + "".join(f'<path d="{wavy(DH * k / len(LAYERS), 14)}" fill="{c}"/>' for k, c in enumerate(LAYERS) if k)
+           + "".join(f'<ellipse class="peb" cx="{DIG.uniform(0, DW):.0f}" cy="{DIG.uniform(0, DH):.0f}" rx="{DIG.uniform(1.5, 5):.1f}" '
+                     f'ry="{DIG.uniform(1, 3.5):.1f}" opacity="{DIG.uniform(.15, .45):.2f}"/>' for _ in range(340))
+           + "".join(ammonite(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(10, 18)) for _ in range(14))
+           + "".join(bone(DIG.uniform(40, DW - 40), DIG.uniform(30, DH - 30), DIG.uniform(.7, 1.2), DIG.uniform(0, 180)) for _ in range(10))
+           + "</svg>")
 
 NCAP = len(P2.CAPS)
 # Separación por par de paradas vecinas: más espacio si quedan en la misma fila o cambian de capítulo.
@@ -64,18 +132,28 @@ for p in POS:
     p["xy"] = coord(p)
 
 mini = [
+    '<defs><pattern id="dig" width="40" height="40" patternUnits="userSpaceOnUse"><path class="digline" d="M40,0 V40 M0,40 H40"/></pattern></defs>',
+    f'<rect width="{MW}" height="{MH}" fill="url(#dig)" aria-hidden="true"/>',
     f'<path class="mrail" d="M{MX0 - 46},{MYT} H{MXN + 40} C{MXN + 90},{MYT} {MXHOY - 60},{MYH} {MXHOY - 16},{MYH}"/>',
     f'<path class="mrail" d="M{MX0 - 46},{MYB} H{MXN + 40} C{MXN + 90},{MYB} {MXHOY - 60},{MYH} {MXHOY - 16},{MYH}"/>',
     f'<path class="mrail sup" d="M{MX0 - 46},{MYA} H{MXN + 20}"/>',
     f'<path class="mrail sup" d="M{MX0 - 46},{MYZ} H{MXN + 20}"/>',
-    f'<text class="mlab" x="{MX0 - 46}" y="{MYA - 5}">extras ↑</text>',
-    f'<text class="mlab" x="{MX0 - 46}" y="{MYZ + 12}">preguntas de seguridad ↓</text>',
+    f'<text class="mlab" x="{MX0 - 46}" y="{MYA - 13}">extras ↑</text>',
+    f'<text class="mlab" x="{MX0 - 46}" y="{MYZ + 19}">preguntas de seguridad ↓</text>',
 ]
 STEPX = {q["i"]: q["xy"][0] for q in POS if q["k"] == "avance"}
 SUPADX = SUPSDX = round((CAPX[-1] - CAPX[0]) / (len(POS) + 4) * .45, 1)
+# Si la etiqueta de un capítulo no cabe junto a la anterior, va debajo de la línea de tiempo.
+LABW = [len(c["k"]) * 9.6 for c in P2.CAPS]
+LABY, prev = [], -1e9
+for ci in range(NCAP):
+    mid = (CAPX[ci] + CAPX[ci + 1]) / 2
+    low = bool(LABY) and LABY[-1] == TLY - 6 and mid - LABW[ci] / 2 < prev + 8
+    LABY.append(TLY + 21 if low else TLY - 6)
+    prev = mid + LABW[ci] / 2 if not low else prev
 for ci in range(NCAP):
     mini.append(f'<g class="tlcap" data-cc="{ci}"><path class="tltick" d="M{CAPX[ci]},{TLY - 6} V{TLY + 6}"/>'
-                f'<text class="tllab" x="{(CAPX[ci] + CAPX[ci + 1]) / 2}" y="{TLY - 4}" text-anchor="middle">{e(P2.CAPS[ci]["k"])}</text>'
+                f'<text class="tllab" x="{(CAPX[ci] + CAPX[ci + 1]) / 2}" y="{LABY[ci]}" text-anchor="middle">{e(P2.CAPS[ci]["k"])}</text>'
                 f'<path class="tlseg" d="M{CAPX[ci] + 4},{TLY} H{CAPX[ci + 1] - 4}"/></g>')
 mini.insert(0, f'<path class="tlline" d="M{CAPX[0]},{TLY} H{CAPX[-1]}"/>')
 for i in SUPA:
@@ -83,35 +161,35 @@ for i in SUPA:
     big = " big" if SUPA[i].get("t") else ""
     mini.append(f'<g class="msup{big}" data-sup="a" data-i="{i}" tabindex="0" role="button" aria-label="Extra del paso {i}">'
                 f'<rect class="hit" x="{x - 12}" y="{MYA - 12}" width="24" height="24"/>'
-                f'<rect class="sq" x="{x - 5}" y="{MYA - 5}" width="10" height="10" rx="2"/></g>')
+                f'{shard(x, MYA, 10 if big else 9)}</g>')
 for i in SUPS:
     x = round([q for q in POS if q["k"] == "seg" and q["i"] == i][-1]["xy"][0] + SUPSDX, 1)
     mini.append(f'<g class="msup" data-sup="s" data-i="{i}" tabindex="0" role="button" aria-label="Preguntas de seguridad del paso {i}">'
                 f'<rect class="hit" x="{x - 12}" y="{MYZ - 12}" width="24" height="24"/>'
-                f'<rect class="sq" x="{x - 5}" y="{MYZ - 5}" width="10" height="10" rx="2"/></g>')
+                f'{shard(x, MYZ)}</g>')
 for idx, p in enumerate(POS):
     if p["k"] in ("portada", "mapa"):
         continue
     x, y = p["xy"]
     if p["k"] == "hoy":
         mini.append(f'<g class="mdot hoy" data-p="{idx}" tabindex="0" role="button" aria-label="Hoy">'
-                    f'<rect x="{x - 4}" y="{y - 11}" width="44" height="22" rx="11"/><text x="{x + 18}" y="{y + 4}" text-anchor="middle">Hoy</text></g>')
+                    f'<rect x="{x - 8}" y="{y - 15}" width="58" height="30" rx="15"/><text x="{x + 21}" y="{y + 5}" text-anchor="middle">Hoy</text></g>')
         continue
     if p["k"] == "cap":
         mini.append(f'<g class="mdot capd" data-p="{idx}" tabindex="0" role="button" aria-label="Capítulo {e(P2.CAPS[p["c"]]["k"])}">'
                     f'<rect class="hit" x="{x - 14}" y="{y - 14}" width="28" height="28"/>'
-                    f'<rect class="gd" x="{x - 6}" y="{y - 6}" width="12" height="12" rx="2"/></g>')
+                    f'<path class="gd" d="M{x - 9},{y - 10} H{x + 9} L{x},{y + 9} Z"/></g>')
         continue
     if p["k"] == "glos":
         mini.append(f'<g class="mdot glos" data-p="{idx}" tabindex="0" role="button" aria-label="Vocabulario">'
                     f'<rect class="hit" x="{x - 14}" y="{y - 14}" width="28" height="28"/>'
-                    f'<rect class="gd" x="{x - 5}" y="{y - 5}" width="10" height="10" transform="rotate(45 {x} {y})"/></g>')
+                    f'<rect class="gd" x="{x - 8}" y="{y - 8}" width="16" height="16" transform="rotate(45 {x} {y})"/></g>')
         continue
     label = f'Paso {p["i"]}' + (" · seguridad" if p["k"] == "seg" else "")
-    num = f'<text class="mnum" x="{x}" y="{MYT - 14}" text-anchor="middle">{p["i"]}</text>' if p["k"] == "avance" else ""
+    num = f'<text class="mnum" x="{x}" y="{MYT - 23}" text-anchor="middle">{p["i"]}</text>' if p["k"] == "avance" else ""
     mini.append(f'<g class="mdot {p["k"]}" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
-                f'<rect class="hit" x="{x - 18}" y="{y - 30 if p["k"] == "avance" else y - 14}" width="36" height="{44 if p["k"] == "avance" else 30}"/>'
-                f'{num}<circle cx="{x}" cy="{y}" r="6.5"/></g>')
+                f'<rect class="hit" x="{x - 18}" y="{y - 40 if p["k"] == "avance" else y - 20}" width="36" height="{60 if p["k"] == "avance" else 40}"/>'
+                f'{num}{tablet(x, y) if p["k"] == "avance" else pin(x, y)}</g>')
 
 mini.append('<g id="msnake"></g>')
 MINI_SVG = f'<svg class="mini" viewBox="0 0 {MW} {MH}" role="navigation" aria-label="Índice de la charla">{"".join(mini)}</svg>'
@@ -216,14 +294,15 @@ page = f"""<title>AI Platform Engineering</title>
   .pos{{font-family:var(--mono);font-size:.8rem;color:var(--muted);width:16.5em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
   .score{{width:6.5em}}
   .minibox{{background:var(--panel);border-bottom:1px solid var(--line);padding-block:4px}}
-  .mini{{display:block;width:100%;max-width:1240px;max-height:110px;margin:0 auto;height:auto}}
+  .mini{{display:block;width:100%;max-width:1240px;max-height:150px;margin:0 auto;height:auto}}
+  @media (max-height:820px){{.mini{{max-height:128px}}}}
   .mrail{{fill:none;stroke:var(--line-2);stroke-width:2.5;stroke-linecap:round}}
   .tlline{{stroke:var(--line-2);stroke-width:1.5}}
   .tltick{{stroke:var(--faint);stroke-width:1.5}}
   .tlseg{{stroke:transparent;stroke-width:4;stroke-linecap:round;transition:stroke .4s}}
   .tlcap.done .tlseg{{stroke:var(--line-2)}}
   .tlcap.cur .tlseg{{stroke:var(--crit)}}
-  .tllab{{font:600 11px var(--display);fill:var(--faint)}}
+  .tllab{{font:650 19px var(--display);fill:var(--faint)}}
   .tlcap.cur .tllab{{fill:var(--crit)}} .tlcap.done .tllab{{fill:var(--muted)}}
   .mdot.capd .gd{{fill:var(--bg);stroke:var(--crit);stroke-width:1.8}}
   .mdot.capd.done .gd{{opacity:0}}
@@ -247,7 +326,7 @@ page = f"""<title>AI Platform Engineering</title>
   .mode a:hover{{background:var(--accent-soft)}}
   .mode a:focus-visible{{outline:2px solid var(--accent);outline-offset:-2px}}
   .mrail.sup{{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 5}}
-  .mlab{{font:600 9.5px var(--sans);letter-spacing:.06em;fill:var(--faint)}}
+  .mlab{{font:600 13px var(--sans);letter-spacing:.06em;fill:var(--faint)}}
   .msup{{cursor:pointer}}
   .msup:focus{{outline:none}}
   .msup .hit{{fill:transparent}}
@@ -269,17 +348,17 @@ page = f"""<title>AI Platform Engineering</title>
   .mdot{{cursor:pointer}}
   .mdot:focus{{outline:none}}
   .mdot .hit{{fill:transparent}}
-  .mdot circle{{fill:var(--bg);stroke:var(--accent);stroke-width:2}}
+  .mdot circle{{fill:var(--bg);stroke:var(--accent);stroke-width:2.4}}
   .mdot.seg circle{{stroke:var(--med)}}
   .mdot.done circle,.mdot.glos.done .gd{{opacity:0;transition:opacity .2s}}
   .mdot.seg.done circle{{fill:var(--med)}}
   .mdot.hoy rect{{fill:var(--bg);stroke:var(--accent);stroke-width:2}}
-  .mdot.hoy text{{font:600 12px var(--display);fill:var(--accent)}}
+  .mdot.hoy text{{font:650 15px var(--display);fill:var(--accent)}}
   .mdot.hoy.done rect{{fill:var(--accent)}} .mdot.hoy.done text{{fill:var(--bg)}}
-  .mnum{{font:600 11px var(--display);fill:var(--muted)}}
+  .mnum{{font:650 16px var(--display);fill:var(--muted)}}
   .mdot.cur .mnum{{fill:var(--accent)}}
   .snake-geo{{fill:none;stroke:none}}
-  .snake-body{{fill:none;stroke:var(--ok);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}}
+  .snake-body{{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}}
   .tongue{{stroke:var(--crit);stroke-width:1.6;fill:none;stroke-linecap:round;opacity:0;animation:tongue 4.5s infinite}}
   @keyframes tongue{{0%,86%,100%{{opacity:0}}88%,92%{{opacity:1}}}}
   .hd-in{{transform-box:fill-box;transform-origin:center}}
@@ -504,6 +583,42 @@ page = f"""<title>AI Platform Engineering</title>
     .cols{{grid-template-columns:minmax(0,1fr)}}
   }}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
+  /* Tema arqueológico: el minimapa es una excavación, igual de alto que el cielo de Espacio. */
+  .mini{{max-height:185px}}
+  @media (max-height:820px){{.mini{{max-height:120px}}}}
+  .minibox{{position:relative;overflow:hidden;background:#e4cfa3;border-bottom-color:#b98b57}}
+  .skybg{{position:absolute;inset:0;width:100%;height:100%}}
+  .minibox .mini{{position:relative}}
+  .digbg .peb{{fill:#6b4f2e}}
+  .digbg .fossil{{fill:none;stroke:#7a5a36;stroke-width:2;stroke-linecap:round;opacity:.28}}
+  .digbg g.fossil circle{{fill:#7a5a36;stroke:none}}
+  .digline{{fill:none;stroke:#7a5a36;stroke-opacity:.14;stroke-width:1}}
+  .mrail{{stroke:#9c7a52;stroke-opacity:.75}}
+  .mrail.sup{{stroke:#9c7a52;stroke-opacity:.6}}
+  .mlab{{fill:#6b4f2e}}
+  .tlline{{stroke:#9c7a52}} .tltick{{stroke:#6b4f2e}}
+  .tllab{{fill:#8a6a44}} .tlcap.done .tllab{{fill:#4a3420}} .tlcap.done .tlseg{{stroke:#9c7a52}}
+  .mnum{{fill:#7c2d12}} .mdot.cur .mnum{{fill:#1c1917}}
+  .mini .tab .tb{{fill:#f8ecd2;stroke:#9a3412;stroke-width:2.2}}
+  .mini .tab .cu{{fill:none;stroke:#9a3412;stroke-width:1.6;stroke-linecap:round;opacity:.7}}
+  .mini .mdot.done .tab .tb{{fill:#c2410c}} .mini .mdot.done .tab .cu{{stroke:#fde7c7}}
+  .mini .mdot.cur .tab .tb{{stroke:#1c1917;stroke-width:3}}
+  .mini .pin .cloth{{fill:#fde68a;stroke:#b45309;stroke-width:1.6;stroke-linejoin:round;transform-box:fill-box;transform-origin:left center}}
+  .mini .pin .pole,.mini .pin .base{{fill:none;stroke:#57534e;stroke-width:2.2;stroke-linecap:round}}
+  .mini .mdot.seg.done .pin .cloth{{fill:#f59e0b}}
+  .mini .mdot.cur .pin .cloth{{stroke:#1c1917;animation:wave 1.4s ease-in-out infinite}}
+  @keyframes wave{{50%{{transform:skewY(-6deg) scaleX(.92)}}}}
+  @media (prefers-reduced-motion: reduce){{.mini .mdot.cur .pin .cloth{{animation:none}}}}
+  .msup .sq{{fill:#fff7e6;stroke:#a16207;stroke-width:1.6;stroke-linejoin:round}}
+  .msup[data-sup="s"] .sq{{fill:#fde68a;stroke:#b45309}}
+  .msup.big .sq{{stroke:#9a3412;stroke-width:2.2}}
+  .msup.eaten .sq{{fill:#cbb48e;stroke:#a68a62}}
+  .mdot.capd .gd{{fill:#f8ecd2;stroke:var(--crit);stroke-width:2}}
+  .mdot.glos .gd{{fill:#f8ecd2;stroke:#7c2d12}}
+  .mdot.hoy rect{{fill:#f8ecd2;stroke:#9a3412}} .mdot.hoy text{{fill:#9a3412}}
+  .mdot.hoy.done rect{{fill:#c2410c}} .mdot.hoy.done text{{fill:#fff7e6}}
+  .snake-body{{stroke:#5b3a1e}}
+  .snake-head{{fill:#5b3a1e}} .snake-eye{{fill:#fde68a}}
   /* Móvil: título fuera de la barra (está en la portada), controles abajo al alcance del pulgar, minimapa desplazable. */
   @media (max-width:700px){{
     html{{font-size:16px}}
@@ -512,16 +627,18 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .ttl > span{{font-size:.68rem;margin-right:0}}
     .bar .mode{{margin-left:0}}
     .bar .mode a,.bar .mode span{{padding:7px 11px}}
-    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;justify-content:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
+    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
       box-shadow:0 -2px 12px rgb(0 0 0 / .08);padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}}
     .nav button{{min-width:46px;min-height:44px;font-size:1rem}}
-    .pos{{flex:1;width:auto;min-width:0;font-size:.72rem}}
+    .pos{{width:auto;min-width:0;font-size:.72rem}}
     .score{{display:none}}
-    .bar .supbtn{{width:auto;max-width:34vw;font-size:.8rem !important}}
+    .bar .supbtn{{position:absolute;right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(100% + 8px);width:auto;max-width:60vw;min-height:40px;
+      box-shadow:0 2px 10px rgb(0 0 0 / .12);font-size:.8rem !important}}
     .bar .supbtn[hidden]{{display:none !important}}
     .minibox{{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}}
     .minibox::-webkit-scrollbar{{display:none}}
-    .mini{{width:860px;max-width:none;max-height:none}}
+    .mini{{width:760px;max-width:none;max-height:none}}
+    .skybg{{right:auto;width:max(100%, 800px)}}
     .stage{{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
     .stitle h2,.mapslide h2{{font-size:1.65rem}}
     .stitle .when{{margin-left:0}}
@@ -547,7 +664,7 @@ page = f"""<title>AI Platform Engineering</title>
     <span class="score" id="score" aria-live="polite">0 pts</span>
   </div>
 </div>
-<div class="minibox">{MINI_SVG}</div>
+<div class="minibox">{DIG_SVG}{MINI_SVG}</div>
 <main class="stage" id="stage" aria-live="polite"></main>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <template id="d-inj">{zip2.trifecta_svg()}</template>
@@ -607,12 +724,12 @@ page = f"""<title>AI Platform Engineering</title>
   function initSnake() {{
     BODY = el("path", {{ d: "M0,0", "class": "snake-geo" }});
     WIG = el("path", {{ d: "M0,0", "class": "snake-body" }});
-    FOOD = el("rect", {{ width: 12, height: 12, rx: 2.5, "class": "food" }});
+    FOOD = el("rect", {{ width: 14, height: 14, rx: 3, "class": "food" }});
     FX = el("g", {{}});
     HEAD = el("g", {{}});
     var inner = el("g", {{ "class": "hd-in" }});
     inner.appendChild(el("path", {{ d: "M8,0 L15,0 M15,0 L18,-2.5 M15,0 L18,2.5", "class": "tongue" }}));
-    inner.appendChild(el("rect", {{ x: -9, y: -9, width: 18, height: 18, rx: 4.5, "class": "snake-head" }}));
+    inner.appendChild(el("rect", {{ x: -11, y: -11, width: 22, height: 22, rx: 5.5, "class": "snake-head" }}));
     inner.appendChild(el("rect", {{ x: 1.5, y: -5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
     inner.appendChild(el("rect", {{ x: 1.5, y: 1.5, width: 3.5, height: 3.5, "class": "snake-eye" }}));
     HEAD.appendChild(inner); HEADIN = inner;
@@ -655,7 +772,7 @@ page = f"""<title>AI Platform Engineering</title>
     if (P >= LAST) {{ FOOD.style.opacity = 0; return; }}
     var f = POS[P + 1].xy, h = STACK[STACK.length - 1].xy;
     if (f[0] === h[0] && f[1] === h[1]) {{ FOOD.style.opacity = 0; return; }}
-    FOOD.setAttribute("x", f[0] - 6); FOOD.setAttribute("y", f[1] - 6);
+    FOOD.setAttribute("x", f[0] - 7); FOOD.setAttribute("y", f[1] - 7);
     FOOD.setAttribute("class", "food f-" + POS[P + 1].k);
     FOOD.style.opacity = 1;
   }}
@@ -886,7 +1003,7 @@ page = f"""<title>AI Platform Engineering</title>
     PG = LANDLAST ? NPG - 1 : 0; LANDLAST = false;
     if (FIRST || REDUCED) {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); return; }}
     st.classList.add("fading");
-    SWAP = setTimeout(function () {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); updateBoard(); }}, 220);
+    SWAP = setTimeout(function () {{ st.innerHTML = html; pageClass(st); fitStage(); if (window.scrollY) window.scrollTo(0, 0); st.classList.remove("fading"); updateBoard(); }}, 220);
   }}
   // Si una página igual no cabe en la pantalla (proyector de 720 px, el mapa completo), se achica lo justo.
   function fitStage() {{
@@ -910,7 +1027,7 @@ page = f"""<title>AI Platform Engineering</title>
     if (REDUCED) {{ pageClass(st); fitStage(); return; }}
     clearTimeout(SWAP);
     st.classList.add("fading");
-    SWAP = setTimeout(function () {{ pageClass(st); fitStage(); st.scrollTop = 0; st.classList.remove("fading"); }}, 180);
+    SWAP = setTimeout(function () {{ pageClass(st); fitStage(); st.scrollTop = 0; if (window.scrollY) window.scrollTo(0, 0); st.classList.remove("fading"); }}, 180);
   }}
   // Siguiente / anterior: primero recorre las páginas de la slide y después cambia de parada.
   function nextPage() {{ if (PG < NPG - 1) {{ turnPage(PG + 1); return true; }} return false; }}
@@ -1030,8 +1147,9 @@ page = f"""<title>AI Platform Engineering</title>
       MBQ = 0;
       var c = MB.querySelector(".mdot.cur, .msup.cur");
       if (!c) return;
-      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect();
-      MB.scrollTo({{ left: MB.scrollLeft + r.left + r.width / 2 - b.left - b.width / 2, behavior: REDUCED ? "auto" : "smooth" }});
+      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect(), cx = r.left + r.width / 2 - b.left;
+      if (cx > b.width * .2 && cx < b.width * .75) return;
+      MB.scrollTo({{ left: MB.scrollLeft + cx - b.width * .35, behavior: REDUCED ? "auto" : "smooth" }});
     }});
   }}).observe(MB, {{ subtree: true, attributes: true, attributeFilter: ["class"] }});
   document.querySelectorAll(".mdot").forEach(function (m) {{

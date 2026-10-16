@@ -667,12 +667,13 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .ttl > span{{font-size:.68rem;margin-right:0}}
     .bar .mode{{margin-left:0}}
     .bar .mode a,.bar .mode span{{padding:7px 11px}}
-    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;justify-content:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
+    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
       box-shadow:0 -2px 12px rgb(0 0 0 / .08);padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}}
     .nav button{{min-width:46px;min-height:44px;font-size:1rem}}
-    .pos{{flex:1;width:auto;min-width:0;font-size:.72rem}}
+    .pos{{width:auto;min-width:0;font-size:.72rem}}
     .score{{display:none}}
-    .bar .supbtn{{width:auto;max-width:34vw;font-size:.8rem !important}}
+    .bar .supbtn{{position:absolute;right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(100% + 8px);width:auto;max-width:60vw;min-height:40px;
+      box-shadow:0 2px 10px rgb(0 0 0 / .12);font-size:.8rem !important}}
     .bar .supbtn[hidden]{{display:none !important}}
     .minibox{{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}}
     .minibox::-webkit-scrollbar{{display:none}}
@@ -1222,7 +1223,7 @@ page = f"""<title>AI Platform Engineering</title>
     PG = LANDLAST ? NPG - 1 : 0; LANDLAST = false;
     if (FIRST || REDUCED) {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); return; }}
     st.classList.add("fading");
-    SWAP = setTimeout(function () {{ st.innerHTML = html; pageClass(st); fitStage(); st.classList.remove("fading"); updateBoard(); }}, 220);
+    SWAP = setTimeout(function () {{ st.innerHTML = html; pageClass(st); fitStage(); if (window.scrollY) window.scrollTo(0, 0); st.classList.remove("fading"); updateBoard(); }}, 220);
   }}
   // Si una página igual no cabe en la pantalla (proyector de 720 px, el mapa completo), se achica lo justo.
   function fitStage() {{
@@ -1246,7 +1247,7 @@ page = f"""<title>AI Platform Engineering</title>
     if (REDUCED) {{ pageClass(st); fitStage(); return; }}
     clearTimeout(SWAP);
     st.classList.add("fading");
-    SWAP = setTimeout(function () {{ pageClass(st); fitStage(); st.scrollTop = 0; st.classList.remove("fading"); }}, 180);
+    SWAP = setTimeout(function () {{ pageClass(st); fitStage(); st.scrollTop = 0; if (window.scrollY) window.scrollTo(0, 0); st.classList.remove("fading"); }}, 180);
   }}
   // Siguiente / anterior: primero recorre las páginas de la slide y después cambia de parada.
   function nextPage() {{ if (PG < NPG - 1) {{ turnPage(PG + 1); return true; }} return false; }}
@@ -1349,8 +1350,9 @@ page = f"""<title>AI Platform Engineering</title>
       MBQ = 0;
       var c = MB.querySelector(".mdot.cur, .msup.cur");
       if (!c) return;
-      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect();
-      MB.scrollTo({{ left: MB.scrollLeft + r.left + r.width / 2 - b.left - b.width / 2, behavior: REDUCED ? "auto" : "smooth" }});
+      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect(), cx = r.left + r.width / 2 - b.left;
+      if (cx > b.width * .2 && cx < b.width * .75) return;
+      MB.scrollTo({{ left: MB.scrollLeft + cx - b.width * .35, behavior: REDUCED ? "auto" : "smooth" }});
     }});
   }}).observe(MB, {{ subtree: true, attributes: true, attributeFilter: ["class"] }});
   document.querySelectorAll(".mdot").forEach(function (m) {{
