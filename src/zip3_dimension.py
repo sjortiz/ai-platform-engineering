@@ -1031,6 +1031,7 @@ page = f"""<title>AI Platform Engineering</title>
     else if (supAvail("s")) {{ b.hidden = false; b.textContent = arrowTo("xs" + p.i) + " preguntas"; }}
     else b.hidden = true;
     b.title = b.textContent;
+    if (typeof save === "function") save();
     var cn = curNode();
     document.querySelectorAll(".medge").forEach(function (e) {{
       e.classList.toggle("lit", e.getAttribute("data-a") === cn || e.getAttribute("data-b") === cn);
@@ -1257,7 +1258,7 @@ page = f"""<title>AI Platform Engineering</title>
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitStage);
   function turnPage(k) {{
     var st = document.getElementById("stage");
-    PG = k;
+    PG = k; save();
     if (typeof drawKeys === "function") drawKeys();
     if (REDUCED) {{ pageClass(st); fitStage(); return; }}
     clearTimeout(SWAP);
@@ -1403,8 +1404,8 @@ page = f"""<title>AI Platform Engineering</title>
   var FIRST = true;
   initSnake();
   // Retoma donde quedó: parada, puntaje, lo comido y los logros (en este navegador, una partida por vista).
-  var SAVE = "ape-state-dimension";
-  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
+  var RESUME = null, SAVE = "ape-state-dimension";
+  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, pg: PG, sup: SUP, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
   function load() {{
     var s = null;
     try {{ s = JSON.parse(localStorage.getItem(SAVE)); }} catch (e) {{}}
@@ -1414,6 +1415,7 @@ page = f"""<title>AI Platform Engineering</title>
     Object.keys(EATEN).forEach(function (k) {{
       if (k.charAt(0) !== "p") document.querySelectorAll('.msup[data-sup="' + k.charAt(0) + '"][data-i="' + k.slice(1) + '"]').forEach(function (m) {{ m.classList.add("eaten"); }});
     }});
+    RESUME = s;
     if (!(s.p > 0 && s.p <= LAST)) return;
     extendTo(POS[s.p].node, "p" + s.p);
     P = s.p;
@@ -1421,6 +1423,11 @@ page = f"""<title>AI Platform Engineering</title>
   load();
   requestAnimationFrame(tick);
   render();
+  if (RESUME) {{
+    if (RESUME.sup && supAvail(RESUME.sup)) enterSup(RESUME.sup);
+    if (RESUME.pg > 0 && RESUME.pg < NPG) {{ PG = RESUME.pg; pageClass(document.getElementById("stage")); fitStage(); if (typeof drawKeys === "function") drawKeys(); }}
+    RESUME = null; save();
+  }}
 }})();
 </script>
 """

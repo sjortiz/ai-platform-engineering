@@ -979,6 +979,7 @@ page = f"""<title>AI Platform Engineering</title>
     else if (supAvail("s")) {{ b.hidden = false; b.textContent = supArrow("s") + " preguntas"; }}
     else b.hidden = true;
     b.title = b.textContent;
+    if (typeof save === "function") save();
   }}
   var SCORE = 0, EATEN = {{}}, PTS = {{ avance: 10, seg: 10, glos: 5, hoy: 10, mapa: 10, extra: 20 }};
   function pop(xy, n) {{
@@ -1198,7 +1199,7 @@ page = f"""<title>AI Platform Engineering</title>
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitStage);
   function turnPage(k) {{
     var st = document.getElementById("stage");
-    PG = k;
+    PG = k; save();
     if (typeof drawKeys === "function") drawKeys();
     if (REDUCED) {{ pageClass(st); fitStage(); return; }}
     clearTimeout(SWAP);
@@ -1369,8 +1370,8 @@ page = f"""<title>AI Platform Engineering</title>
   var FIRST = true;
   initSnake();
   // Retoma donde quedó: parada, puntaje, lo comido y los logros (en este navegador, una partida por vista).
-  var SAVE = "ape-state-anos";
-  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
+  var RESUME = null, SAVE = "ape-state-anos";
+  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, pg: PG, sup: SUP, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
   function load() {{
     var s = null;
     try {{ s = JSON.parse(localStorage.getItem(SAVE)); }} catch (e) {{}}
@@ -1380,6 +1381,7 @@ page = f"""<title>AI Platform Engineering</title>
     Object.keys(EATEN).forEach(function (k) {{
       if (k.charAt(0) !== "p") document.querySelectorAll('.msup[data-sup="' + k.charAt(0) + '"][data-i="' + k.slice(1) + '"]').forEach(function (m) {{ m.classList.add("eaten"); }});
     }});
+    RESUME = s;
     if (!(s.p > 0 && s.p <= LAST)) return;
     for (var j = 1; j <= s.p; j++) extendTo(POS[j].node, "p" + j);
     P = s.p;
@@ -1387,6 +1389,11 @@ page = f"""<title>AI Platform Engineering</title>
   load();
   requestAnimationFrame(tick);
   render();
+  if (RESUME) {{
+    if (RESUME.sup && supAvail(RESUME.sup)) enterSup(RESUME.sup);
+    if (RESUME.pg > 0 && RESUME.pg < NPG) {{ PG = RESUME.pg; pageClass(document.getElementById("stage")); fitStage(); if (typeof drawKeys === "function") drawKeys(); }}
+    RESUME = null; save();
+  }}
 }})();
 </script>
 """
