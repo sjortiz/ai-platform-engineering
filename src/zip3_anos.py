@@ -4,6 +4,7 @@ import html
 import json
 import math
 import random
+import re
 from pathlib import Path
 
 from detalle import SECX, ADVX, EXTRA, SECHITOS, SECEX, GLOS, SUPA, SUPS
@@ -34,12 +35,15 @@ for ci in range(len(P2.CAPS)):
 POS.append(dict(k="hoy", i=N + 1, cc=len(P2.CAPS) - 1))
 POS.append(dict(k="mapa", i=N + 2, cc=len(P2.CAPS) - 1))
 
-# Minimapa
-MW, MH = 1400, 256
-MX0, MXN, MXHOY = 70, 1190, 1336
-TLY = 34
-MYA, MYT, MYB, MYZ = 82, 140, 196, 234
-MYH = (MYT + MYB) // 2
+# Minimapa: un tablero de excavación con la lógica de Espacio. Cada parada queda en su año (x) y se
+# reparte a lo alto del tablero; la posición sale de una relajación con semilla fija y se ajusta a la
+# cuadrícula. Arriba, la línea de tiempo con los años.
+G = 16
+MW, MH = 1920, 256
+TLY = 36
+ROW0, ROW1 = 4, 14  # filas libres debajo de los años
+RND = random.Random(11)
+RAD = dict(portada=10, avance=19, hoy=28, seg=13, glos=7, cap=8, xa=5, xs=5)
 
 
 def pts(xy):
@@ -47,8 +51,8 @@ def pts(xy):
 
 
 def tablet(x, y):
-    """Tablilla de arcilla con marcas grabadas."""
-    marks = f"M{x - 7},{y - 8} h6 M{x + 2},{y - 8} h5 M{x - 7},{y - 1} h3 M{x - 1},{y - 1} h8 M{x - 7},{y + 6} h9 M{x + 5},{y + 6} h2"
+    """Tablilla de arcilla con marcas grabadas debajo del número."""
+    marks = f"M{x - 7},{y + 10} h6 M{x + 2},{y + 10} h5"
     return (f'<g class="blk tab"><rect class="tb" x="{x - 14}" y="{y - 17}" width="28" height="34" rx="5"/>'
             f'<path class="cu" d="{marks}"/></g>')
 
@@ -109,71 +113,139 @@ DIG_SVG = (f'<svg class="skybg digbg" viewBox="0 0 {DW} {DH}" preserveAspectRati
            + "</svg>")
 
 NCAP = len(P2.CAPS)
-# Separación por par de paradas vecinas: más espacio si quedan en la misma fila o cambian de capítulo.
-SEQ = [q for q in POS if q["k"] not in ("portada", "hoy", "mapa")]
-row = lambda q: "s" if q["k"] == "seg" else "a"
-gaps = [(1.0 if row(a) == row(b) else .55) + (.35 if b["k"] == "cap" else 0) for a, b in zip(SEQ, SEQ[1:])]
-unit = (MXN - MX0 + 30) / (sum(gaps) + 1)
-x = MX0 - 15 + unit / 2
-for k, q in enumerate(SEQ):
-    x += unit * gaps[k - 1] if k else 0
-    q["sx"] = round(x, 1)
-CAPX = [MX0 - 20] + [round(q["sx"] - unit * .55, 1) for q in SEQ if q["k"] == "cap"][1:] + [MXN + 20]
+SEQ = [q for q in POS if q["k"] not in ("portada", "mapa")]
+X0, X1 = 80, MW - 40
+# Cada capítulo ocupa lo que piden sus paradas y nunca menos de lo que mide su año.
+LABW = [len(c["k"]) * 13 + 40 for c in P2.CAPS]
+cnt = [sum(1 for q in SEQ if q["cc"] == ci) for ci in range(NCAP)]
+unit = (X1 - X0) / len(SEQ)
+for _ in range(20):
+    wide = [ci for ci in range(NCAP) if LABW[ci] > cnt[ci] * unit]
+    unit = (X1 - X0 - sum(LABW[ci] for ci in wide)) / sum(cnt[ci] for ci in range(NCAP) if ci not in wide)
+CAPX = [X0]
+for ci in range(NCAP):
+    CAPX.append(round(CAPX[-1] + max(LABW[ci], cnt[ci] * unit), 1))
+for ci in range(NCAP):
+    qs = [q for q in SEQ if q["cc"] == ci]
+    for j, q in enumerate(qs):
+        q["sx"] = CAPX[ci] + (j + .5) * (CAPX[ci + 1] - CAPX[ci]) / len(qs)
 
-def coord(p):
-    if p["k"] == "portada":
-        return [MX0 - 46, MYT]
-    if p["k"] in ("hoy", "mapa"):
-        return [MXHOY - 16, MYH]
-    return [p["sx"], MYB if p["k"] == "seg" else MYT]
 
+def nid(q):
+    return {"portada": "start", "hoy": "hoy", "mapa": "hoy", "glos": f"g{q.get('i')}", "cap": f"c{q.get('c')}",
+            "seg": f"s{q.get('t')}"}.get(q["k"], f"a{q.get('i')}")
+
+
+# Los pasos y la seguridad saltan 2–6 filas respecto de la parada anterior; capítulos y vocabulario
+# siguen la fila de la anterior. Extras y preguntas van al lado con más lugar.
+NODES, SUPOF = {}, {}
+ROWS = list(range(ROW0 * G + G // 2, ROW1 * G + G // 2 + 1, G))
+y = 152
+for q in SEQ:
+    if q["k"] in ("avance", "seg", "hoy"):
+        y = RND.choice([v for v in ROWS if 32 <= abs(v - y) <= 96])
+    NODES[nid(q)] = dict(k=q["k"], xy=[q["sx"], y])
+NODES["start"] = dict(k="portada", xy=[34, NODES[nid(SEQ[0])]["xy"][1]])
+for q in SEQ:
+    x, y = NODES[nid(q)]["xy"]
+    sd = -1 if y >= 152 else 1
+    if q["k"] == "avance" and q["i"] in SUPA:
+        NODES[f"xa{q['i']}"] = dict(k="xa", xy=[x, y + 44 * sd])
+        SUPOF[f"xa{q['i']}"] = nid(q)
+    if q["k"] == "seg" and q["n"] == q["c"] - 1 and q["i"] in SUPS:
+        NODES[f"xs{q['i']}"] = dict(k="xs", xy=[x, y + 40 * sd])
+        SUPOF[f"xs{q['i']}"] = nid(q)
+
+ids = list(NODES)
+HOME = {n: list(NODES[n]["xy"]) for n in ids}
+for _ in range(400):
+    mv = {n: [0.0, 0.0] for n in ids}
+    for n in ids:
+        if NODES[n]["k"] not in ("xa", "xs"):  # cada parada vuelve a su año y a su fila
+            mv[n][0] += (HOME[n][0] - NODES[n]["xy"][0]) * .3
+            mv[n][1] += (HOME[n][1] - NODES[n]["xy"][1]) * .2
+    for u in range(len(ids)):
+        for v in range(u + 1, len(ids)):
+            a, b = ids[u], ids[v]
+            (xa, ya), (xb, yb) = NODES[a]["xy"], NODES[b]["xy"]
+            dx, dy = xb - xa, yb - ya
+            d = math.hypot(dx, dy) or .01
+            want = RAD[NODES[a]["k"]] + RAD[NODES[b]["k"]] + 16
+            if d < want:
+                f = (want - d) / 2 / d
+                mv[a][0] -= dx * f; mv[a][1] -= dy * f
+                mv[b][0] += dx * f; mv[b][1] += dy * f
+    for sat, par in SUPOF.items():
+        (xp, yp), (xs, ys) = NODES[par]["xy"], NODES[sat]["xy"]
+        d = math.hypot(xs - xp, ys - yp) or .01
+        f = (40 - d) / d * .5
+        mv[sat][0] += (xs - xp) * f; mv[sat][1] += (ys - yp) * f
+    for n in ids:
+        k, xy = NODES[n]["k"], NODES[n]["xy"]
+        if k in ("portada", "avance"):  # los pasos quedan fijos: son el esqueleto del recorrido
+            continue
+        xy[0] += mv[n][0] * .5
+        xy[1] += mv[n][1] * .5
+        r = RAD[k] + 4
+        xy[0] = min(MW - r, max(r, xy[0]))
+        xy[1] = min(ROW1 * G + G - r, max(ROW0 * G + r, xy[1]))
+# Cada parada al centro de una celda libre; los bloques grandes dejan un pasillo alrededor.
+used = set()
+for n in sorted(ids, key=lambda n: -RAD[NODES[n]["k"]]):
+    x, y = NODES[n]["xy"]
+    cx, cy = round((x - G / 2) / G), round((y - G / 2) / G)
+    for span in (6, 12, 24):
+        cands = sorted(((cx + dx, cy + dy) for dx in range(-span, span + 1) for dy in range(-10, 11)
+                        if ROW0 <= cy + dy <= ROW1 and 1 <= cx + dx <= MW // G - 2 and (cx + dx, cy + dy) not in used),
+                       key=lambda c: abs(c[0] - cx) + abs(c[1] - cy))
+        if cands:
+            break
+    c = cands[0]
+    r = 2 if NODES[n]["k"] in ("avance", "seg", "hoy") else 1
+    used.update((c[0] + dx, c[1] + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1))
+    NODES[n]["xy"] = [c[0] * G + G // 2, c[1] * G + G // 2]
 
 for p in POS:
-    p["xy"] = coord(p)
+    p["node"] = nid(p)
+    p["xy"] = NODES[p["node"]]["xy"]
+
+
+def year_x(yr):
+    c = P2.cap_of_year(yr)
+    t0, t1 = P2.CAPS[c]["t0"], P2.CAPS[c]["t1"]
+    return round(CAPX[c] + (yr + .5 - t0) / (t1 - t0) * (CAPX[c + 1] - CAPX[c]), 1)
+
 
 mini = [
-    '<defs><pattern id="dig" width="40" height="40" patternUnits="userSpaceOnUse"><path class="digline" d="M40,0 V40 M0,40 H40"/></pattern></defs>',
+    f'<defs><pattern id="dig" width="{G * 2}" height="{G * 2}" patternUnits="userSpaceOnUse"><path class="digline" d="M{G * 2},0 V{G * 2} M0,{G * 2} H{G * 2}"/></pattern></defs>',
     f'<rect width="{MW}" height="{MH}" fill="url(#dig)" aria-hidden="true"/>',
-    f'<path class="mrail" d="M{MX0 - 46},{MYT} H{MXN + 40} C{MXN + 90},{MYT} {MXHOY - 60},{MYH} {MXHOY - 16},{MYH}"/>',
-    f'<path class="mrail" d="M{MX0 - 46},{MYB} H{MXN + 40} C{MXN + 90},{MYB} {MXHOY - 60},{MYH} {MXHOY - 16},{MYH}"/>',
-    f'<path class="mrail sup" d="M{MX0 - 46},{MYA} H{MXN + 20}"/>',
-    f'<path class="mrail sup" d="M{MX0 - 46},{MYZ} H{MXN + 20}"/>',
-    f'<text class="mlab" x="{MX0 - 46}" y="{MYA - 13}">extras ↑</text>',
-    f'<text class="mlab" x="{MX0 - 46}" y="{MYZ + 19}">preguntas de seguridad ↓</text>',
+    f'<path class="tlline" d="M{CAPX[0]},{TLY} H{CAPX[-1]}"/>',
 ]
-STEPX = {q["i"]: q["xy"][0] for q in POS if q["k"] == "avance"}
-SUPADX = SUPSDX = round((CAPX[-1] - CAPX[0]) / (len(POS) + 4) * .45, 1)
-# Si la etiqueta de un capítulo no cabe junto a la anterior, va debajo de la línea de tiempo.
-LABW = [len(c["k"]) * 9.6 for c in P2.CAPS]
-LABY, prev = [], -1e9
 for ci in range(NCAP):
-    mid = (CAPX[ci] + CAPX[ci + 1]) / 2
-    low = bool(LABY) and LABY[-1] == TLY - 6 and mid - LABW[ci] / 2 < prev + 8
-    LABY.append(TLY + 21 if low else TLY - 6)
-    prev = mid + LABW[ci] / 2 if not low else prev
-for ci in range(NCAP):
-    mini.append(f'<g class="tlcap" data-cc="{ci}"><path class="tltick" d="M{CAPX[ci]},{TLY - 6} V{TLY + 6}"/>'
-                f'<text class="tllab" x="{(CAPX[ci] + CAPX[ci + 1]) / 2}" y="{LABY[ci]}" text-anchor="middle">{e(P2.CAPS[ci]["k"])}</text>'
+    mini.append(f'<g class="tlcap" data-cc="{ci}"><path class="tltick" d="M{CAPX[ci]},{TLY - 8} V{TLY + 8}"/>'
+                f'<text class="tllab" x="{(CAPX[ci] + CAPX[ci + 1]) / 2}" y="{TLY - 10}" text-anchor="middle">{e(P2.CAPS[ci]["k"])}</text>'
                 f'<path class="tlseg" d="M{CAPX[ci] + 4},{TLY} H{CAPX[ci + 1] - 4}"/></g>')
-mini.insert(0, f'<path class="tlline" d="M{CAPX[0]},{TLY} H{CAPX[-1]}"/>')
+for sat, par in SUPOF.items():
+    (xp, yp), (xs, ys) = NODES[par]["xy"], NODES[sat]["xy"]
+    mini.append(f'<path class="medge" d="M{xp},{yp} L{xs},{ys}"/>')
 for i in SUPA:
-    x = round(STEPX[i] + SUPADX, 1)
+    x, y = NODES[f"xa{i}"]["xy"]
     big = " big" if SUPA[i].get("t") else ""
     mini.append(f'<g class="msup{big}" data-sup="a" data-i="{i}" tabindex="0" role="button" aria-label="Extra del paso {i}">'
-                f'<rect class="hit" x="{x - 12}" y="{MYA - 12}" width="24" height="24"/>'
-                f'{shard(x, MYA, 10 if big else 9)}</g>')
+                f'<rect class="hit" x="{x - 12}" y="{y - 12}" width="24" height="24"/>'
+                f'{shard(x, y, 10 if big else 9)}</g>')
 for i in SUPS:
-    x = round([q for q in POS if q["k"] == "seg" and q["i"] == i][-1]["xy"][0] + SUPSDX, 1)
+    x, y = NODES[f"xs{i}"]["xy"]
     mini.append(f'<g class="msup" data-sup="s" data-i="{i}" tabindex="0" role="button" aria-label="Preguntas de seguridad del paso {i}">'
-                f'<rect class="hit" x="{x - 12}" y="{MYZ - 12}" width="24" height="24"/>'
-                f'{shard(x, MYZ)}</g>')
+                f'<rect class="hit" x="{x - 12}" y="{y - 12}" width="24" height="24"/>'
+                f'{shard(x, y)}</g>')
 for idx, p in enumerate(POS):
     if p["k"] in ("portada", "mapa"):
         continue
     x, y = p["xy"]
     if p["k"] == "hoy":
         mini.append(f'<g class="mdot hoy" data-p="{idx}" tabindex="0" role="button" aria-label="Hoy">'
-                    f'<rect x="{x - 8}" y="{y - 15}" width="58" height="30" rx="15"/><text x="{x + 21}" y="{y + 5}" text-anchor="middle">Hoy</text></g>')
+                    f'<rect x="{x - 28}" y="{y - 15}" width="56" height="30" rx="15"/><text x="{x}" y="{y + 5}" text-anchor="middle">Hoy</text></g>')
         continue
     if p["k"] == "cap":
         mini.append(f'<g class="mdot capd" data-p="{idx}" tabindex="0" role="button" aria-label="Capítulo {e(P2.CAPS[p["c"]]["k"])}">'
@@ -186,10 +258,21 @@ for idx, p in enumerate(POS):
                     f'<rect class="gd" x="{x - 8}" y="{y - 8}" width="16" height="16" transform="rotate(45 {x} {y})"/></g>')
         continue
     label = f'Paso {p["i"]}' + (" · seguridad" if p["k"] == "seg" else "")
-    num = f'<text class="mnum" x="{x}" y="{MYT - 23}" text-anchor="middle">{p["i"]}</text>' if p["k"] == "avance" else ""
-    mini.append(f'<g class="mdot {p["k"]}" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
-                f'<rect class="hit" x="{x - 18}" y="{y - 40 if p["k"] == "avance" else y - 20}" width="36" height="{60 if p["k"] == "avance" else 40}"/>'
-                f'{num}{tablet(x, y) if p["k"] == "avance" else pin(x, y)}</g>')
+    if p["k"] == "seg":
+        mini.append(f'<g class="mdot seg" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">'
+                    f'<rect class="hit" x="{x - 18}" y="{y - 20}" width="36" height="40"/>{pin(x, y)}</g>')
+        continue
+    # Fantasma punteado en el año en que la tecnología aparece, unido a la tablilla del año de uso real.
+    ap = re.search(r"aparece (\d{4})", zip2.STEPS[p["i"] - 1]["when"])
+    ghost = ""
+    if ap and year_x(int(ap.group(1))) < x - 24:
+        ax = year_x(int(ap.group(1)))
+        ghost = (f'<g class="ghost"><path class="gl" d="M{ax + 9},{y} H{x - 16}"/>'
+                 f'<rect class="gt" x="{ax - 9}" y="{y - 11}" width="18" height="22" rx="3"/>'
+                 f'<text class="gy" x="{ax}" y="{y - 16}" text-anchor="middle">{ap.group(1)}</text></g>')
+    mini.append(f'<g class="mdot avance" data-p="{idx}" tabindex="0" role="button" aria-label="{label}">{ghost}'
+                f'<rect class="hit" x="{x - 18}" y="{y - 20}" width="36" height="40"/>'
+                f'{tablet(x, y)}<text class="mnum" x="{x}" y="{y + 4}" text-anchor="middle">{p["i"]}</text></g>')
 
 mini.append('<g id="msnake"></g>')
 MINI_SVG = f'<svg class="mini" viewBox="0 0 {MW} {MH}" role="navigation" aria-label="Índice de la charla">{"".join(mini)}</svg>'
@@ -237,7 +320,7 @@ ARCH_MAP = arch_map()
 FULL_SVG = (f'<svg class="zip-svg" viewBox="0 0 {zip2.W} {zip2.H}" role="img" aria-label="Mapa completo: avances arriba, seguridad abajo, se juntan en Hoy">'
             f'{zip2.defs}{"".join(zip2.svg)}</svg>')
 
-DATA = dict(pos=[dict(k=p["k"], i=p.get("i"), t=p.get("t"), n=p.get("n", 0), c=p.get("c", 1), cc=p["cc"], xy=p["xy"]) for p in POS],
+DATA = dict(pos=[dict(k=p["k"], i=p.get("i"), t=p.get("t"), n=p.get("n", 0), c=p.get("c", 1), cc=p["cc"], xy=p["xy"], node=p["node"]) for p in POS],
             caps=[dict(k=c["k"], titulo=c["titulo"], lead=c["lead"], neck=c["neck"], why=c["why"]) for c in P2.CAPS],
             detail={str(k): v for k, v in zip2.DETAIL.items()},
             names={str(i): s["n"] for i, s in enumerate(zip2.STEPS, 1)},
@@ -251,7 +334,7 @@ DATA = dict(pos=[dict(k=p["k"], i=p.get("i"), t=p.get("t"), n=p.get("n", 0), c=p
             supa={str(k): v for k, v in SUPA.items()},
             sups={str(k): v for k, v in SUPS.items()},
             fuentes=FUENTES,
-            mya=MYA, myz=MYZ, supadx=SUPADX, supsdx=SUPSDX)
+            nodes={k: v["xy"] for k, v in NODES.items()}, grid=[G, MW // G, MH // G])
 
 css = (HERE / "master.css").read_text()
 
@@ -302,7 +385,7 @@ page = f"""<title>AI Platform Engineering</title>
   .tlseg{{stroke:transparent;stroke-width:4;stroke-linecap:round;transition:stroke .4s}}
   .tlcap.done .tlseg{{stroke:var(--line-2)}}
   .tlcap.cur .tlseg{{stroke:var(--crit)}}
-  .tllab{{font:650 19px var(--display);fill:var(--faint)}}
+  .tllab{{font:650 24px var(--display);fill:var(--faint)}}
   .tlcap.cur .tllab{{fill:var(--crit)}} .tlcap.done .tllab{{fill:var(--muted)}}
   .mdot.capd .gd{{fill:var(--bg);stroke:var(--crit);stroke-width:1.8}}
   .mdot.capd.done .gd{{opacity:0}}
@@ -355,7 +438,7 @@ page = f"""<title>AI Platform Engineering</title>
   .mdot.hoy rect{{fill:var(--bg);stroke:var(--accent);stroke-width:2}}
   .mdot.hoy text{{font:650 15px var(--display);fill:var(--accent)}}
   .mdot.hoy.done rect{{fill:var(--accent)}} .mdot.hoy.done text{{fill:var(--bg)}}
-  .mnum{{font:650 16px var(--display);fill:var(--muted)}}
+  .mnum{{font:650 15px var(--display);fill:var(--muted)}}
   .mdot.cur .mnum{{fill:var(--accent)}}
   .snake-geo{{fill:none;stroke:none}}
   .snake-body{{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}}
@@ -584,7 +667,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
   /* Tema arqueológico: el minimapa es una excavación, igual de alto que el cielo de Espacio. */
-  .mini{{max-height:185px}}
+  .mini{{max-height:185px;max-width:none}}
   @media (max-height:820px){{.mini{{max-height:120px}}}}
   .minibox{{position:relative;overflow:hidden;background:#e4cfa3;border-bottom-color:#b98b57}}
   .skybg{{position:absolute;inset:0;width:100%;height:100%}}
@@ -598,7 +681,13 @@ page = f"""<title>AI Platform Engineering</title>
   .mlab{{fill:#6b4f2e}}
   .tlline{{stroke:#9c7a52}} .tltick{{stroke:#6b4f2e}}
   .tllab{{fill:#8a6a44}} .tlcap.done .tllab{{fill:#4a3420}} .tlcap.done .tlseg{{stroke:#9c7a52}}
-  .mnum{{fill:#7c2d12}} .mdot.cur .mnum{{fill:#1c1917}}
+  .mnum{{fill:#7c2d12;pointer-events:none}} .mdot.cur .mnum{{fill:#1c1917}} .mini .mdot.done .mnum{{fill:#fff7e6}}
+  .medge{{fill:none;stroke:#7a5a36;stroke-width:1.6;stroke-dasharray:2 4;opacity:.55}}
+  /* Aparece (fantasma punteado) → uso real (tablilla): se enciende en la parada actual. */
+  .ghost .gl{{fill:none;stroke:#9a3412;stroke-width:1.6;stroke-dasharray:2 5;opacity:.4;transition:opacity .3s}}
+  .ghost .gt{{fill:#f8ecd2;fill-opacity:.4;stroke:#9a3412;stroke-width:1.5;stroke-dasharray:3 3;opacity:.55;transition:opacity .3s}}
+  .ghost .gy{{font:650 14px var(--sans);fill:#7c2d12;opacity:0;transition:opacity .3s}}
+  .mdot.cur .ghost .gl,.mdot.cur .ghost .gt,.mdot.cur .ghost .gy{{opacity:1}}
   .mini .tab .tb{{fill:#f8ecd2;stroke:#9a3412;stroke-width:2.2}}
   .mini .tab .cu{{fill:none;stroke:#9a3412;stroke-width:1.6;stroke-linecap:round;opacity:.7}}
   .mini .mdot.done .tab .tb{{fill:#c2410c}} .mini .mdot.done .tab .cu{{stroke:#fde7c7}}
@@ -619,6 +708,11 @@ page = f"""<title>AI Platform Engineering</title>
   .mdot.hoy.done rect{{fill:#c2410c}} .mdot.hoy.done text{{fill:#fff7e6}}
   .snake-body{{stroke:#5b3a1e}}
   .snake-head{{fill:#5b3a1e}} .snake-eye{{fill:#fde68a}}
+  .stitle .when .wa::before,.stitle .when .wu::before{{content:"";display:inline-block;width:.62em;height:.8em;border-radius:2px;margin-right:.4em;vertical-align:-.05em}}
+  .stitle .when .wa::before{{border:1.5px dashed currentColor}}
+  .stitle .when .wu::before{{background:var(--accent)}}
+  .stitle .when .wl{{display:inline-block;width:2.4em;border-top:2px dotted var(--faint);vertical-align:middle;margin:0 .55em}}
+  .stitle .when .wu{{color:var(--ink);font-weight:600}}
   /* Móvil: título fuera de la barra (está en la portada), controles abajo al alcance del pulgar, minimapa desplazable. */
   @media (max-width:700px){{
     html{{font-size:16px}}
@@ -637,8 +731,8 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .supbtn[hidden]{{display:none !important}}
     .minibox{{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}}
     .minibox::-webkit-scrollbar{{display:none}}
-    .mini{{width:760px;max-width:none;max-height:none}}
-    .skybg{{right:auto;width:max(100%, 800px)}}
+    .mini{{width:1275px;max-width:none;max-height:none}}
+    .skybg{{right:auto;width:max(100%, 1320px)}}
     .stage{{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
     .stitle h2,.mapslide h2{{font-size:1.65rem}}
     .stitle .when{{margin-left:0}}
@@ -655,7 +749,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por años</span><a href="espacio.html">Espacio</a></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="espacio.html">Espacio</a><span aria-current="page">Por años</span></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -689,13 +783,7 @@ page = f"""<title>AI Platform Engineering</title>
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SG = document.getElementById("msnake"), BODY, HEAD, FOOD, LENS = [], TOTAL = 0, CUR = 0, RAF = 0;
   // Serpiente con rastro: cada movimiento agrega un tramo desde la cabeza; los desvíos quedan en el camino.
-  var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null;
-  function segD(a, b) {{
-    if (a[0] === b[0] && a[1] === b[1]) return "";
-    if (a[1] === b[1]) return " L" + b[0] + "," + b[1];
-    var dx = Math.max(12, b[0] - a[0]) * .55;
-    return " C" + (a[0] + dx) + "," + a[1] + " " + (b[0] - dx) + "," + b[1] + " " + b[0] + "," + b[1];
-  }}
+  var SUP = null, WIG, FX, HEADIN, SAMP = [], STEPS = 3, TRD = "", STACK = [], RETRACT = null, PLAN = null, SHRINK = 0;
   function sample(path, total) {{
     var out = [];
     for (var s = 0; s <= total; s += STEPS) {{
@@ -706,15 +794,100 @@ page = f"""<title>AI Platform Engineering</title>
     return out;
   }}
   function setTrail(d) {{ TRD = d; BODY.setAttribute("d", d); TOTAL = BODY.getTotalLength(); SAMP = sample(BODY, TOTAL); }}
-  function extend(xy, key) {{
-    var s = segD(STACK[STACK.length - 1].xy, xy);
+  // Cada tramo se busca en la cuadrícula: esquiva el cuerpo y la otra comida, arranca hacia la
+  // flecha presionada (o sigue de frente) y gira lo menos posible.
+  var GS = D.grid[0], GW = D.grid[1], GH = D.grid[2], LASTEND = null;
+  function cellOf(xy) {{ return [Math.round((xy[0] - GS / 2) / GS), Math.round((xy[1] - GS / 2) / GS)]; }}
+  function center(c) {{ return [c[0] * GS + GS / 2, c[1] * GS + GS / 2]; }}
+  function heading() {{
+    if (TOTAL < 2) return [1, 0];
+    var a = BODY.getPointAtLength(TOTAL - 2), b = BODY.getPointAtLength(TOTAL);
+    return Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? [b.x >= a.x ? 1 : -1, 0] : [0, b.y >= a.y ? 1 : -1];
+  }}
+  // Celdas ocupadas: el cuerpo (no se puede cruzar) y la comida que no es el destino; los pasos
+  // ocupan 3×3 celdas. Las celdas vecinas a ambos cuestan más, para que la serpiente deje aire.
+  function obstacles(from, target, food, cut) {{
+    // Como en Snake, la cola avanza con la cabeza: cada celda del cuerpo guarda en qué paso queda
+    // libre. El tramo que crece al comer (GROW) queda ocupado todo el movimiento.
+    var hard = {{}}, soft = {{}}, body = {{}}, L = Math.max(40, bodyLen() - (cut || 0)), GROW = 24, tail = TOTAL - L;
+    function mark(x, y, r, v) {{ for (var dx = -r; dx <= r; dx++) for (var dy = -r; dy <= r; dy++) {{ var k = (x + dx) + "," + (y + dy); if (v) hard[k] = 1; else soft[k] = 1; }} }}
+    for (var s = Math.max(0, tail - GROW); s < TOTAL - GS / 2; s += GS / 4) {{
+      var p = BODY.getPointAtLength(s), c = cellOf([p.x, p.y]), k = c[0] + "," + c[1];
+      body[k] = Math.max(body[k] || 0, s < tail ? 1e9 : Math.ceil((s - tail) / GS) + 1);
+      mark(c[0], c[1], 1, 0);
+    }}
+    var tc = cellOf(D.nodes[target]);
+    mark(tc[0], tc[1], 0, 1);
+    if (food) Object.keys(D.nodes).forEach(function (n) {{
+      if (n === target) return;
+      var c = cellOf(D.nodes[n]), big = n === "hoy" || /^a[0-9]/.test(n) || (n.charAt(0) === "s" && n !== "start");
+      mark(c[0], c[1], big ? 1 : 0, 1); mark(c[0], c[1], big ? 2 : 1, 0);
+    }});
+    return {{ hard: hard, soft: soft, body: body }};
+  }}
+  // Búsqueda por celdas (cada celda una sola vez, así la ruta nunca se cruza) con costo extra por
+  // girar y por pasar pegado a algo. La primera dirección favorecida es la flecha presionada.
+  // La serpiente no entra al centro del nodo (puede estar ocupado por su cuerpo si ya pasó por ahí):
+  // se detiene en una celda pegada a él, como si lo mordiera.
+  function gridPath(from, to, dir, ob) {{
+    var D4 = [[1, 0], [0, 1], [-1, 0], [0, -1]], d0 = 0, goals = {{}}, tk = null;
+    D4.forEach(function (d, k) {{
+      if (d[0] === dir[0] && d[1] === dir[1]) d0 = k;
+      var gk = (to[0] + d[0]) + "," + (to[1] + d[1]);
+      goals[gk] = d[0] === -dir[0] && d[1] === -dir[1] ? 1 : 4;
+    }});
+    var done = {{}}, prev = {{}}, open = [[0, from[0], from[1], d0, null, 0]];
+    while (open.length) {{
+      open.sort(function (a, b) {{ return a[0] - b[0]; }});
+      var cur = open.shift(), key = cur[1] + "," + cur[2];
+      if (done[key]) continue;
+      done[key] = cur[3] + 1; prev[key] = cur[4];
+      if (goals[key] && cur[4] !== null) {{ tk = key; break; }}
+      var step = cur[5] + 1;
+      D4.forEach(function (d, k) {{
+        if ((k + 2) % 4 === cur[3]) return;
+        var x = cur[1] + d[0], y = cur[2] + d[1], nk = x + "," + y;
+        if (x < 0 || y < 0 || x >= GW || y >= GH || done[nk]) return;
+        if (!goals[nk] && ob.hard[nk]) return;
+        if (ob.body && ob.body[nk] && step <= ob.body[nk]) return;  // la cola todavía no salió de esa celda
+        open.push([cur[0] + 1 + (k === cur[3] ? 0 : 3) + (ob.soft[nk] && !goals[nk] ? 1.5 : 0) + (goals[nk] ? goals[nk] - 1 : 0), x, y, k, key, step]);
+      }});
+    }}
+    if (!tk) return null;
+    var out = [];
+    for (var k = tk; k; k = prev[k]) {{ var q = k.split(","); out.unshift([+q[0], +q[1]]); }}
+    return out;
+  }}
+  // Si la serpiente se encerró, la cola se acorta lo justo para que quepa (SHRINK) y vuelve a crecer
+  // a medida que la cabeza avanza, sin retroceder sobre el rastro viejo.
+  function hopPath(fromXY, n, dir, fromId, commit) {{
+    var a = cellOf(fromXY), b = cellOf(D.nodes[n]);
+    var cells = gridPath(a, b, dir, obstacles(fromId, n, true)) || gridPath(a, b, dir, obstacles(fromId, n, false));
+    for (var cut = GS * 2; !cells && cut <= 640; cut *= 2) {{
+      cells = gridPath(a, b, dir, obstacles(fromId, n, false, cut));
+      if (cells && commit) SHRINK += cut;
+    }}
+    cells = cells || [a, b];
+    LASTEND = center(cells[cells.length - 1]);
+    var d = "", pts = cells.map(center);
+    for (var i = 1; i < pts.length; i++) {{
+      var last = i === pts.length - 1, p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+      if (last || (p1[0] - p0[0]) !== (p2[0] - p1[0]) || (p1[1] - p0[1]) !== (p2[1] - p1[1])) d += " L" + p1[0] + "," + p1[1];
+    }}
+    return d;
+  }}
+  // Un tramo por parada, como en Espacio; dir es la flecha con la que se entra a un extra.
+  function extendTo(id, key, dir) {{
+    var top = STACK[STACK.length - 1], was = TOTAL, cut = SHRINK, s = hopPath(top.xy, id, dir || heading(), top.id, true);
     if (s) setTrail(TRD + s);
-    STACK.push({{ key: key, xy: xy, len: TOTAL, d: TRD }});
+    if (SHRINK === cut) SHRINK = Math.max(0, SHRINK - (TOTAL - was));
+    STACK.push({{ key: key, id: id, xy: LASTEND, len: TOTAL, d: TRD }});
   }}
   function truncate(idx) {{ STACK = STACK.slice(0, idx + 1); setTrail(STACK[idx].d); }}
   function resetTrail() {{
     var xy = POS[0].xy;
-    STACK = [{{ key: "p0", xy: xy, len: 0, d: "M" + xy[0] + "," + xy[1] }}];
+    SHRINK = 0;
+    STACK = [{{ key: "p0", id: POS[0].node, xy: xy, len: 0, d: "M" + xy[0] + "," + xy[1] }}];
     setTrail(STACK[0].d);
   }}
   function settle() {{
@@ -736,13 +909,16 @@ page = f"""<title>AI Platform Engineering</title>
     SG.appendChild(BODY); SG.appendChild(FOOD); SG.appendChild(WIG); SG.appendChild(HEAD); SG.appendChild(FX);
     resetTrail();
   }}
+  // Como en Snake: el cuerpo tiene un largo que crece con lo que come y la cola sigue a la cabeza.
+  function bodyLen() {{ return Math.max(40, Math.min(340, 70 + 12 * Object.keys(EATEN).length) - SHRINK); }}
   function wave(samp, upto, t, amp) {{
     var n = Math.min(samp.length - 1, Math.floor(upto / STEPS)), d = "";
-    for (var i = 0; i <= n; i++) {{
+    var i0 = Math.max(0, Math.floor((upto - bodyLen()) / STEPS));
+    for (var i = i0; i <= n; i++) {{
       var s = i * STEPS, q = samp[i];
       var A = amp * Math.min(1, s / 24) * Math.min(1, Math.max(0, (upto - s) / 16));
       var o = A * Math.sin(s / 13 - t);
-      d += (i ? " L" : "M") + (q[0] + q[2] * o).toFixed(1) + "," + (q[1] + q[3] * o).toFixed(1);
+      d += (i > i0 ? " L" : "M") + (q[0] + q[2] * o).toFixed(1) + "," + (q[1] + q[3] * o).toFixed(1);
     }}
     return d || "M0,0";
   }}
@@ -766,6 +942,7 @@ page = f"""<title>AI Platform Engineering</title>
     var a = len > 3 ? BODY.getPointAtLength(len - 3) : pt, b = len > 3 ? pt : BODY.getPointAtLength(Math.min(TOTAL, len + 3));
     var ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     HEAD.setAttribute("transform", "translate(" + pt.x + "," + pt.y + ") rotate(" + ang + ")");
+    follow(pt.x);
     if (REDUCED) drawBody(0);
   }}
   function placeFood() {{
@@ -804,10 +981,9 @@ page = f"""<title>AI Platform Engineering</title>
       m.classList.toggle("avail", !SUP && p.i === i && supAvail(k));
     }});
     var b = document.getElementById("b-sup");
-    if (SUP === "a") {{ b.hidden = false; b.textContent = "↓ volver"; }}
-    else if (SUP === "s") {{ b.hidden = false; b.textContent = "↑ volver"; }}
-    else if (supAvail("a")) {{ b.hidden = false; b.textContent = D.supa[String(p.i)].t ? "↑ extra: " + D.supa[String(p.i)].t : "↑ preguntas"; }}
-    else if (supAvail("s")) {{ b.hidden = false; b.textContent = "↓ preguntas"; }}
+    if (SUP) {{ b.hidden = false; b.textContent = backArrow() + " volver"; }}
+    else if (supAvail("a")) {{ b.hidden = false; b.textContent = supArrow("a") + (D.supa[String(p.i)].t ? " extra: " + D.supa[String(p.i)].t : " preguntas"); }}
+    else if (supAvail("s")) {{ b.hidden = false; b.textContent = supArrow("s") + " preguntas"; }}
     else b.hidden = true;
     b.title = b.textContent;
   }}
@@ -911,11 +1087,17 @@ page = f"""<title>AI Platform Engineering</title>
     }}
     return '<figure class="xfile"><figcaption>' + esc(x.name) + '</figcaption><pre>' + esc(x.body) + '</pre></figure>';
   }}
+  // "aparece X · uso real Y": la primera parte con un marco punteado y la segunda con un bloque lleno.
+  function whenHTML(w) {{
+    var p = String(w).split(" · ");
+    return '<span class="when">' + (p.length > 1 ? '<span class="wa">' + esc(p[0]) + '</span><i class="wl" aria-hidden="true"></i>' : '') +
+      '<span class="wu">' + esc(p[p.length - 1]) + '</span></span>';
+  }}
   function advBand(i, d, secHTML) {{
     var x = D.advx[String(i)] || {{}};
     var hitos = d.hitos.map(hl).join("");
     return '<div class="sslide">' +
-      '<header class="stitle"><span class="num">Paso ' + i + '</span><h2>' + esc(d.t) + '</h2><span class="when">' + esc(d.when) + '</span></header>' +
+      '<header class="stitle"><span class="num">Paso ' + i + '</span><h2>' + esc(d.t) + '</h2>' + whenHTML(d.when) + '</header>' +
       '<div class="sgrid"><div class="smain">' +
         '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
         '<div class="asec">' + sub("En la práctica") + '<p class="txt">' + esc(d.ej) + '</p></div>' +
@@ -971,16 +1153,16 @@ page = f"""<title>AI Platform Engineering</title>
     var step = D.detail[String(i)];
     if (kind === "s") {{
       return '<div class="sslide supslide secsup"><header class="stitle"><span class="num">Paso ' + i + ' · Seguridad · Preguntas</span><h2>' +
-        esc((D.secnames[i] || []).join(" · ")) + '</h2><span class="when">↑ para volver</span></header>' + faqHTML(D.sups[String(i)]) + '</div>';
+        esc((D.secnames[i] || []).join(" · ")) + '</h2><span class="when">' + backArrow() + ' para volver</span></header>' + faqHTML(D.sups[String(i)]) + '</div>';
     }}
     var x = D.supa[String(i)];
     if (!x.t) {{
       return '<div class="sslide supslide"><header class="stitle"><span class="num">Paso ' + i + ' · Preguntas</span><h2>' + esc(step.t) +
-        '</h2><span class="when">↓ para volver</span></header>' + faqHTML(x.faq) + '</div>';
+        '</h2><span class="when">' + backArrow() + ' para volver</span></header>' + faqHTML(x.faq) + '</div>';
     }}
     var hitos = x.hitos.map(hl).join("");
     return '<div class="sslide supslide"><header class="stitle"><span class="num">Paso ' + i + ' · Extra</span><h2>' + esc(x.t) +
-      '</h2><span class="when">↓ para volver</span></header>' +
+      '</h2><span class="when">' + backArrow() + ' para volver</span></header>' +
       '<div class="sgrid"><div class="smain"><div data-pg="1"><p class="lead">' + esc(x.lead) + '</p>' +
         '<div class="asec">' + sub("Cómo se ve") + '<div class="seegrid"><pre class="snip">' + esc(x.ve) + '</pre>' + exHTML(x.ex) + '</div></div></div>' +
         '<div data-pg="2"><div class="asec">' + sub("Cómo aplicarlo") + howBlock(x.how, "En tu equipo") + '</div>' +
@@ -1032,13 +1214,20 @@ page = f"""<title>AI Platform Engineering</title>
   // Siguiente / anterior: primero recorre las páginas de la slide y después cambia de parada.
   function nextPage() {{ if (PG < NPG - 1) {{ turnPage(PG + 1); return true; }} return false; }}
   function prevPage() {{ if (PG > 0) {{ turnPage(PG - 1); return true; }} return false; }}
+  function supArrow(k) {{ var p = POS[P]; return D.nodes["x" + k + p.i][1] < D.nodes[p.node][1] ? "↑" : "↓"; }}
+  function backArrow() {{ return supArrow(SUP) === "↑" ? "↓" : "↑"; }}
+  function supKey(a) {{
+    if (SUP) {{ if (a === backArrow()) leaveSup(); return; }}
+    if (supAvail("a") && supArrow("a") === a) enterSup("a");
+    else if (supAvail("s") && supArrow("s") === a) enterSup("s");
+  }}
   function enterSup(kind) {{
     if (SUP || !supAvail(kind)) return;
     settle();
     SUP = kind;
     var p = POS[P], key = kind + p.i;
-    var xy = [Math.round((p.xy[0] + (kind === "a" ? D.supadx : D.supsdx)) * 10) / 10, kind === "a" ? D.mya : D.myz];
-    if (STACK[STACK.length - 1].key !== key) extend(xy, key);
+    var id = "x" + kind + p.i, xy = D.nodes[id];
+    if (STACK[STACK.length - 1].key !== key) extendTo(id, key, [0, supArrow(kind) === "↑" ? -1 : 1]);
     var ii = p.i;
     animateLen(TOTAL, null, function () {{ eatUpTo(P); eatExtra(kind, ii, xy); placeFood(); }});
     showStage(supSlide(kind, p.i));
@@ -1114,13 +1303,13 @@ page = f"""<title>AI Platform Engineering</title>
     settle();
     SUP = null; PLAN = null;
     if (k > P) {{
-      for (var j = P + 1; j <= k; j++) extend(POS[j].xy, "p" + j);
+      for (var j = P + 1; j <= k; j++) extendTo(POS[j].node, "p" + j);
       PLAN = {{ len: TOTAL }};
     }} else if (k < P) {{
       var idx = -1;
       for (var q = STACK.length - 1; q >= 0; q--) if (STACK[q].key === "p" + k) {{ idx = q; break; }}
       if (idx >= 0) {{ RETRACT = {{ len: STACK[idx].len, idx: idx }}; PLAN = {{ len: STACK[idx].len }}; }}
-      else {{ resetTrail(); for (var j2 = 1; j2 <= k; j2++) extend(POS[j2].xy, "p" + j2); setLen(TOTAL); PLAN = {{ len: TOTAL }}; }}
+      else {{ resetTrail(); for (var j2 = 1; j2 <= k; j2++) extendTo(POS[j2].node, "p" + j2); setLen(TOTAL); PLAN = {{ len: TOTAL }}; }}
     }} else PLAN = {{ len: CUR }};
     P = k; render();
   }}
@@ -1139,19 +1328,15 @@ page = f"""<title>AI Platform Engineering</title>
     if (ev.target.closest && ev.target.closest(".amap-wrap,pre,.snip")) return;
     document.getElementById(dx < 0 ? "b-next" : "b-prev").click();
   }});
-  // Móvil: el minimapa es más ancho que la pantalla y se desplaza para seguir la parada actual.
-  var MB = document.querySelector(".minibox"), MBQ = 0;
-  new MutationObserver(function () {{
-    if (MBQ || MB.scrollWidth <= MB.clientWidth) return;
-    MBQ = requestAnimationFrame(function () {{
-      MBQ = 0;
-      var c = MB.querySelector(".mdot.cur, .msup.cur");
-      if (!c) return;
-      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect(), cx = r.left + r.width / 2 - b.left;
-      if (cx > b.width * .2 && cx < b.width * .75) return;
-      MB.scrollTo({{ left: MB.scrollLeft + cx - b.width * .35, behavior: REDUCED ? "auto" : "smooth" }});
-    }});
-  }}).observe(MB, {{ subtree: true, attributes: true, attributeFilter: ["class"] }});
+  // Móvil: el minimapa es más ancho que la pantalla y sigue a la cabeza de la serpiente mientras avanza.
+  var MB = document.querySelector(".minibox"), MSVG = document.querySelector(".mini");
+  function follow(x) {{
+    if (!MB || MB.scrollWidth <= MB.clientWidth + 1) return;
+    var r = MSVG.getBoundingClientRect(), b = MB.getBoundingClientRect();
+    var hx = r.left + x * r.width / MSVG.viewBox.baseVal.width - b.left;
+    if (hx > b.width * .6) MB.scrollLeft += hx - b.width * .6;
+    else if (hx < b.width * .3) MB.scrollLeft += hx - b.width * .3;
+  }}
   document.querySelectorAll(".mdot").forEach(function (m) {{
     function pick() {{ go(+m.getAttribute("data-p")); }}
     m.addEventListener("click", pick);
@@ -1162,8 +1347,8 @@ page = f"""<title>AI Platform Engineering</title>
     if (ev.key === "ArrowRight" || ev.key === "PageDown" || ev.key === " ") {{ ev.preventDefault(); if (!nextPage()) go(P + 1); }}
     else if (ev.key === "ArrowLeft" || ev.key === "PageUp") {{ ev.preventDefault(); if (!prevPage()) {{ LANDLAST = P > 0; go(P - 1); }} }}
     else if (ev.key === "Home") {{ go(0); }} else if (ev.key === "End") {{ go(LAST); }}
-    else if (ev.key === "ArrowUp") {{ ev.preventDefault(); if (SUP === "s") leaveSup(); else enterSup("a"); }}
-    else if (ev.key === "ArrowDown") {{ ev.preventDefault(); if (SUP === "a") leaveSup(); else enterSup("s"); }}
+    else if (ev.key === "ArrowUp") {{ ev.preventDefault(); supKey("↑"); }}
+    else if (ev.key === "ArrowDown") {{ ev.preventDefault(); supKey("↓"); }}
   }});
   document.getElementById("b-sup").addEventListener("click", function () {{
     if (SUP) leaveSup(); else if (supAvail("a")) enterSup("a"); else enterSup("s");

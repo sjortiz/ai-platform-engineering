@@ -611,7 +611,7 @@ page = f"""<title>AI Platform Engineering</title>
   @media (max-height: 820px){{.mini{{max-height:120px}}}}
   .minibox{{position:relative;overflow:hidden;background:#0b1026;border-bottom-color:#0b1026}}
   .skybg{{position:absolute;inset:0;width:100%;height:100%}}
-  @media (max-width:700px){{.skybg{{right:auto;width:max(100%, 800px)}}}}
+  @media (max-width:700px){{.skybg{{right:auto;width:max(100%, 980px)}}}}
   .minibox .mini{{position:relative}}
   .tablero{{stroke:#fff;stroke-opacity:.06}} .tbg{{fill:none;stroke:#fff;stroke-opacity:.05}}
   .bgs{{fill:#e2e8f0}} .bgs.tw{{animation:twinkle 4s ease-in-out infinite}}
@@ -659,6 +659,11 @@ page = f"""<title>AI Platform Engineering</title>
   .mkey rect{{fill:#e2e8f0;opacity:.95}} .mkey text{{font:700 11px var(--sans);fill:#0b1026}}
   .msup.avail,.msup.cur{{opacity:1}}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
+  .stitle .when .wa::before,.stitle .when .wu::before{{content:"";display:inline-block;width:.62em;height:.8em;border-radius:2px;margin-right:.4em;vertical-align:-.05em}}
+  .stitle .when .wa::before{{border:1.5px dashed currentColor}}
+  .stitle .when .wu::before{{background:var(--accent)}}
+  .stitle .when .wl{{display:inline-block;width:2.4em;border-top:2px dotted var(--faint);vertical-align:middle;margin:0 .55em}}
+  .stitle .when .wu{{color:var(--ink);font-weight:600}}
   /* Móvil: título fuera de la barra (está en la portada), controles abajo al alcance del pulgar, minimapa desplazable. */
   @media (max-width:700px){{
     html{{font-size:16px}}
@@ -677,7 +682,7 @@ page = f"""<title>AI Platform Engineering</title>
     .bar .supbtn[hidden]{{display:none !important}}
     .minibox{{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}}
     .minibox::-webkit-scrollbar{{display:none}}
-    .mini{{width:760px;max-width:none;max-height:none}}
+    .mini{{width:935px;max-width:none;max-height:none}}
     .stage{{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
     .stitle h2,.mapslide h2{{font-size:1.65rem}}
     .stitle .when{{margin-left:0}}
@@ -694,7 +699,7 @@ page = f"""<title>AI Platform Engineering</title>
   }}
 </style>
 <div class="bar">
-  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><a href="por-anos.html">Por años</a><span aria-current="page">Espacio</span></nav></div>
+  <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Espacio</span><a href="por-anos.html">Por años</a></nav></div>
   <div class="nav">
     <button type="button" id="b-sup" class="supbtn" hidden></button>
     <button type="button" id="b-prev" aria-label="Anterior">◀</button>
@@ -969,6 +974,7 @@ page = f"""<title>AI Platform Engineering</title>
     var a = len > 3 ? BODY.getPointAtLength(len - 3) : pt, b = len > 3 ? pt : BODY.getPointAtLength(Math.min(TOTAL, len + 3));
     var ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     HEAD.setAttribute("transform", "translate(" + pt.x + "," + pt.y + ") rotate(" + ang + ")");
+    follow(pt.x);
     starsNear(pt.x, pt.y);
     if (REDUCED) drawBody(0);
   }}
@@ -1131,11 +1137,17 @@ page = f"""<title>AI Platform Engineering</title>
     }}
     return '<figure class="xfile"><figcaption>' + esc(x.name) + '</figcaption><pre>' + esc(x.body) + '</pre></figure>';
   }}
+  // "aparece X · uso real Y": la primera parte con un marco punteado y la segunda con un bloque lleno.
+  function whenHTML(w) {{
+    var p = String(w).split(" · ");
+    return '<span class="when">' + (p.length > 1 ? '<span class="wa">' + esc(p[0]) + '</span><i class="wl" aria-hidden="true"></i>' : '') +
+      '<span class="wu">' + esc(p[p.length - 1]) + '</span></span>';
+  }}
   function advBand(i, d, secHTML) {{
     var x = D.advx[String(i)] || {{}};
     var hitos = d.hitos.map(hl).join("");
     return '<div class="sslide">' +
-      '<header class="stitle"><span class="num">Paso ' + i + '</span><h2>' + esc(d.t) + '</h2><span class="when">' + esc(d.when) + '</span></header>' +
+      '<header class="stitle"><span class="num">Paso ' + i + '</span><h2>' + esc(d.t) + '</h2>' + whenHTML(d.when) + '</header>' +
       '<div class="sgrid"><div class="smain">' +
         '<div data-pg="1"><p class="lead">' + esc(d.lead) + '</p>' +
         '<div class="asec">' + sub("En la práctica") + '<p class="txt">' + esc(d.ej) + '</p></div>' +
@@ -1342,19 +1354,15 @@ page = f"""<title>AI Platform Engineering</title>
     if (ev.target.closest && ev.target.closest(".amap-wrap,pre,.snip")) return;
     document.getElementById(dx < 0 ? "b-next" : "b-prev").click();
   }});
-  // Móvil: el minimapa es más ancho que la pantalla y se desplaza para seguir la parada actual.
-  var MB = document.querySelector(".minibox"), MBQ = 0;
-  new MutationObserver(function () {{
-    if (MBQ || MB.scrollWidth <= MB.clientWidth) return;
-    MBQ = requestAnimationFrame(function () {{
-      MBQ = 0;
-      var c = MB.querySelector(".mdot.cur, .msup.cur");
-      if (!c) return;
-      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect(), cx = r.left + r.width / 2 - b.left;
-      if (cx > b.width * .2 && cx < b.width * .75) return;
-      MB.scrollTo({{ left: MB.scrollLeft + cx - b.width * .35, behavior: REDUCED ? "auto" : "smooth" }});
-    }});
-  }}).observe(MB, {{ subtree: true, attributes: true, attributeFilter: ["class"] }});
+  // Móvil: el minimapa es más ancho que la pantalla y sigue a la cabeza de la serpiente mientras avanza.
+  var MB = document.querySelector(".minibox"), MSVG = document.querySelector(".mini");
+  function follow(x) {{
+    if (!MB || MB.scrollWidth <= MB.clientWidth + 1) return;
+    var r = MSVG.getBoundingClientRect(), b = MB.getBoundingClientRect();
+    var hx = r.left + x * r.width / MSVG.viewBox.baseVal.width - b.left;
+    if (hx > b.width * .6) MB.scrollLeft += hx - b.width * .6;
+    else if (hx < b.width * .3) MB.scrollLeft += hx - b.width * .3;
+  }}
   document.querySelectorAll(".mdot").forEach(function (m) {{
     function pick() {{ go(+m.getAttribute("data-p")); }}
     m.addEventListener("click", pick);

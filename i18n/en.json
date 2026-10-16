@@ -1178,5 +1178,8 @@
  "data-pg=\"3\"": "data-pg=\"3\"",
  ".amap-wrap,pre,.snip": ".amap-wrap,pre,.snip",
  ".mdot.cur, .msup.cur": ".mdot.cur, .msup.cur",
- ".minibox": ".minibox"
+ ".minibox": ".minibox",
+ "<a href=\"espacio.html\">Espacio</a><span aria-current=\"page\">Por años</span>": "<a href=\"espacio.html\">Space</a><span aria-current=\"page\">By year</span>",
+ "<span aria-current=\"page\">Espacio</span><a href=\"por-anos.html\">Por años</a>": "<span aria-current=\"page\">Space</span><a href=\"por-anos.html\">By year</a>",
+ ".mini": ".mini"
 }

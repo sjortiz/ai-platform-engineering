@@ -9,8 +9,7 @@ Charla para el [BarCamp RD](https://barcamp.org.do): cada vez que automatizamos 
 | Tecla | Acción |
 |---|---|
 | ← → | Paso anterior / siguiente |
-| ↑ | Extras del paso (preguntas frecuentes) |
-| ↓ | Preguntas de seguridad |
+| ↑ ↓ | Extras y preguntas de seguridad del paso (el botón de arriba indica cuál flecha) |
 | Inicio / Fin | Portada / mapa completo |
 
 También puedes hacer clic en cualquier punto del minimapa.
