@@ -1015,6 +1015,7 @@ page = f"""<title>AI Platform Engineering</title>
   ];
   var GOT = {{}};
   function checkAch() {{
+    save();
     ACH.forEach(function (a) {{ if (!GOT[a[0]] && a[3]()) {{ GOT[a[0]] = 1; toast(a[1], a[2]); }} }});
     updateBoard();
   }}
@@ -1051,7 +1052,7 @@ page = f"""<title>AI Platform Engineering</title>
       m.classList.toggle("done", k <= P);
       m.classList.toggle("cur", k === P);
     }});
-    if (first) {{ setLen(0); placeFood(); return; }}
+    if (first) {{ setLen(TOTAL); placeFood(); return; }}
     animateLen((PLAN || {{ len: TOTAL }}).len, onArrive, function () {{
       if (RETRACT) {{ truncate(RETRACT.idx); RETRACT = null; }}
       placeFood(); eatUpTo(P);
@@ -1289,6 +1290,7 @@ page = f"""<title>AI Platform Engineering</title>
     if (!back) moveSnake(FIRST, arrive);
     FIRST = false;
     markSup();
+    save();
     document.querySelectorAll(".tlcap").forEach(function (g) {{ var c = +g.getAttribute("data-cc"); g.classList.toggle("cur", c === p.cc); g.classList.toggle("done", c < p.cc); }});
   }}
   function go(k) {{
@@ -1366,6 +1368,23 @@ page = f"""<title>AI Platform Engineering</title>
   }});
   var FIRST = true;
   initSnake();
+  // Retoma donde quedó: parada, puntaje, lo comido y los logros (en este navegador, una partida por vista).
+  var SAVE = "ape-state-anos";
+  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
+  function load() {{
+    var s = null;
+    try {{ s = JSON.parse(localStorage.getItem(SAVE)); }} catch (e) {{}}
+    if (!s || typeof s !== "object") return;
+    SCORE = +s.score || 0; EATEN = s.eaten || {{}}; GOT = s.got || {{}};
+    document.getElementById("score").textContent = SCORE + " pts";
+    Object.keys(EATEN).forEach(function (k) {{
+      if (k.charAt(0) !== "p") document.querySelectorAll('.msup[data-sup="' + k.charAt(0) + '"][data-i="' + k.slice(1) + '"]').forEach(function (m) {{ m.classList.add("eaten"); }});
+    }});
+    if (!(s.p > 0 && s.p <= LAST)) return;
+    for (var j = 1; j <= s.p; j++) extendTo(POS[j].node, "p" + j);
+    P = s.p;
+  }}
+  load();
   requestAnimationFrame(tick);
   render();
 }})();

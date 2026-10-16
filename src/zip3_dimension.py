@@ -1078,6 +1078,7 @@ page = f"""<title>AI Platform Engineering</title>
   ];
   var GOT = {{}};
   function checkAch() {{
+    save();
     ACH.forEach(function (a) {{ if (!GOT[a[0]] && a[3]()) {{ GOT[a[0]] = 1; toast(a[1], a[2]); }} }});
     updateBoard();
   }}
@@ -1110,7 +1111,7 @@ page = f"""<title>AI Platform Engineering</title>
   function ease(t) {{ return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }}
   function moveSnake(first, onArrive) {{
     markDots();
-    if (first) {{ setLen(0); placeFood(); return; }}
+    if (first) {{ setLen(TOTAL); placeFood(); return; }}
     animateLen((PLAN || {{ len: TOTAL }}).len, onArrive, function () {{
       if (RETRACT) {{ truncate(RETRACT.idx); RETRACT = null; }}
       placeFood(); eatAt(P);
@@ -1329,6 +1330,7 @@ page = f"""<title>AI Platform Engineering</title>
     if (!back) moveSnake(FIRST, arrive);
     FIRST = false;
     markSup();
+    save();
   }}
   function go(k) {{
     k = Math.min(LAST, Math.max(0, k));
@@ -1400,6 +1402,23 @@ page = f"""<title>AI Platform Engineering</title>
   }});
   var FIRST = true;
   initSnake();
+  // Retoma donde quedó: parada, puntaje, lo comido y los logros (en este navegador, una partida por vista).
+  var SAVE = "ape-state-dimension";
+  function save() {{ try {{ localStorage.setItem(SAVE, JSON.stringify({{ p: P, score: SCORE, eaten: EATEN, got: GOT }})); }} catch (e) {{}} }}
+  function load() {{
+    var s = null;
+    try {{ s = JSON.parse(localStorage.getItem(SAVE)); }} catch (e) {{}}
+    if (!s || typeof s !== "object") return;
+    SCORE = +s.score || 0; EATEN = s.eaten || {{}}; GOT = s.got || {{}};
+    document.getElementById("score").textContent = SCORE + " pts";
+    Object.keys(EATEN).forEach(function (k) {{
+      if (k.charAt(0) !== "p") document.querySelectorAll('.msup[data-sup="' + k.charAt(0) + '"][data-i="' + k.slice(1) + '"]').forEach(function (m) {{ m.classList.add("eaten"); }});
+    }});
+    if (!(s.p > 0 && s.p <= LAST)) return;
+    extendTo(POS[s.p].node, "p" + s.p);
+    P = s.p;
+  }}
+  load();
   requestAnimationFrame(tick);
   render();
 }})();
