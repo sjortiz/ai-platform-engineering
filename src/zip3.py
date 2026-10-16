@@ -458,6 +458,38 @@ page = f"""<title>AI Platform Engineering</title>
     .cols{{grid-template-columns:minmax(0,1fr)}}
   }}
   @media (prefers-reduced-motion:reduce){{*{{transition:none !important}}}}
+  /* Móvil: título fuera de la barra (está en la portada), controles abajo al alcance del pulgar, minimapa desplazable. */
+  @media (max-width:700px){{
+    html{{font-size:16px}}
+    .bar{{padding-block:8px}}
+    .bar .ttl{{font-size:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px}}
+    .bar .ttl > span{{font-size:.68rem;margin-right:0}}
+    .bar .mode{{margin-left:0}}
+    .bar .mode a,.bar .mode span{{padding:7px 11px}}
+    .nav{{position:fixed;left:0;right:0;bottom:0;z-index:30;justify-content:center;gap:8px;background:var(--bg);border-top:1px solid var(--line);
+      box-shadow:0 -2px 12px rgb(0 0 0 / .08);padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))}}
+    .nav button{{min-width:46px;min-height:44px;font-size:1rem}}
+    .pos{{flex:1;width:auto;min-width:0;font-size:.72rem}}
+    .score{{display:none}}
+    .bar .supbtn{{width:auto;max-width:34vw;font-size:.8rem !important}}
+    .bar .supbtn[hidden]{{display:none !important}}
+    .minibox{{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}}
+    .minibox::-webkit-scrollbar{{display:none}}
+    .mini{{width:900px;max-width:none;max-height:none}}
+    .stage{{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
+    .stitle h2,.mapslide h2{{font-size:1.65rem}}
+    .stitle .when{{margin-left:0}}
+    .hoyslide h2{{font-size:1.9rem}}
+    .hoyslide .lead,.cover p{{font-size:1.12rem}}
+    .bigquote{{font-size:1.3rem}}
+    aside.tl{{border-left:0;padding-left:16px;border-top:1px solid var(--line-2);padding-top:10px}}
+    aside.tl li::before{{left:-16px}}
+    dl.how{{grid-template-columns:minmax(0,1fr)}}
+    dl.how dt{{white-space:normal}}
+    .faq .sub{{font-size:1.1rem}}
+    .toasts{{left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
+    .toast{{min-width:0}}
+  }}
 </style>
 <div class="bar">
   <div class="ttl"><span>BarCamp</span>AI Platform Engineering — El blocker eres tú<nav class="mode" aria-label="Vista"><span aria-current="page">Por pasos</span><a href="por-anos.html">Por años</a><a href="espacio.html">Espacio</a></nav></div>
@@ -815,6 +847,7 @@ page = f"""<title>AI Platform Engineering</title>
     var kids = [].slice.call(document.getElementById("stage").children);
     if (!kids.length) return;
     kids.forEach(function (k) {{ k.style.zoom = ""; }});
+    if (window.innerWidth <= 700) return;
     var top = kids[0].getBoundingClientRect().top, bottom = top;
     kids.forEach(function (k) {{
       [k].concat([].slice.call(k.querySelectorAll("*"))).forEach(function (e) {{ var r = e.getBoundingClientRect(); if (r.height) bottom = Math.max(bottom, r.bottom); }});
@@ -917,6 +950,31 @@ page = f"""<title>AI Platform Engineering</title>
   }}
   document.getElementById("b-prev").addEventListener("click", function () {{ if (!prevPage()) {{ LANDLAST = P > 0; go(P - 1); }} }});
   document.getElementById("b-next").addEventListener("click", function () {{ if (!nextPage()) go(P + 1); }});
+  // Móvil: deslizar sobre la slide = ▶ / ◀ (menos sobre contenido que se desplaza de lado).
+  var TX = null;
+  document.getElementById("stage").addEventListener("touchstart", function (ev) {{
+    TX = ev.touches.length === 1 ? [ev.touches[0].clientX, ev.touches[0].clientY] : null;
+  }}, {{ passive: true }});
+  document.getElementById("stage").addEventListener("touchend", function (ev) {{
+    if (!TX) return;
+    var t = ev.changedTouches[0], dx = t.clientX - TX[0], dy = t.clientY - TX[1];
+    TX = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+    if (ev.target.closest && ev.target.closest(".amap-wrap,pre,.snip")) return;
+    document.getElementById(dx < 0 ? "b-next" : "b-prev").click();
+  }});
+  // Móvil: el minimapa es más ancho que la pantalla y se desplaza para seguir la parada actual.
+  var MB = document.querySelector(".minibox"), MBQ = 0;
+  new MutationObserver(function () {{
+    if (MBQ || MB.scrollWidth <= MB.clientWidth) return;
+    MBQ = requestAnimationFrame(function () {{
+      MBQ = 0;
+      var c = MB.querySelector(".mdot.cur, .msup.cur");
+      if (!c) return;
+      var r = c.getBoundingClientRect(), b = MB.getBoundingClientRect();
+      MB.scrollTo({{ left: MB.scrollLeft + r.left + r.width / 2 - b.left - b.width / 2, behavior: REDUCED ? "auto" : "smooth" }});
+    }});
+  }}).observe(MB, {{ subtree: true, attributes: true, attributeFilter: ["class"] }});
   document.querySelectorAll(".mdot").forEach(function (m) {{
     function pick() {{ go(+m.getAttribute("data-p")); }}
     m.addEventListener("click", pick);
