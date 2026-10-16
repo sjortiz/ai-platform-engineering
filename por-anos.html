@@ -390,6 +390,27 @@
   .cover p{font-size:1.35rem;color:var(--muted);max-width:44ch;margin:0 0 26px}
   .cover .k{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px}
   .cover .go{font-family:var(--mono);font-size:.9rem;color:var(--faint)}
+  /* Quién soy: segunda página de la portada. */
+  .about{display:grid;grid-template-columns:auto minmax(0,1fr);gap:40px;align-items:center}
+  .about .av{display:block;width:220px;height:220px;border-radius:50%;overflow:hidden;border:4px solid var(--accent-soft)}
+  .about .av img{display:block;width:100%;height:100%;object-fit:cover}
+  .about .quote{font-family:var(--display);font-style:italic;color:var(--ink);border-left:3px solid var(--accent);padding-left:14px}
+  .about .csub{color:var(--accent)}
+  .about h1{font-size:clamp(2.2rem,4.4vw,3.3rem)}
+  .about .csub{font-size:clamp(1.3rem,2.6vw,1.9rem);margin-bottom:16px}
+  .about p{margin:0 0 12px;max-width:60ch;font-size:1.15rem}
+  .about .csub .amp{font-family:var(--sans);font-weight:500;font-size:.9em}
+  .about .byline{font-family:var(--mono);font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:-6px 0 18px}
+  .about .byline span{color:var(--accent);margin:0 .35em}
+  .about .hook{font-family:var(--display);font-weight:600;font-size:clamp(1.35rem,2.4vw,1.75rem);line-height:1.25;color:var(--ink);margin-bottom:10px}
+  .about ul.does{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px;max-width:64ch;font-size:1.1rem}
+  .about ul.does li{position:relative;padding-left:22px;line-height:1.4}
+  .about ul.does li::before{content:"▸";position:absolute;left:0;color:var(--accent)}
+  .about ul.does b{color:var(--ink)}
+  .about .links{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:22px;font-family:var(--mono);font-size:1.05rem}
+  .about .links a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--line-2)}
+  .about .links a:hover{border-bottom-color:var(--accent)}
+  @media (max-width:700px){.about{grid-template-columns:minmax(0,1fr);gap:20px} .about .av{width:112px;height:112px}}
 
   /* Slide de paso: dos bandas, como los rieles */
   .band{display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;align-items:start}
@@ -1184,9 +1205,21 @@
   var SHOWN = null, SWAP = 0;
   function slideHTML(p) {
     if (p.k === "portada") {
-      return '<div class="cover"><div class="k">BarCamp</div><h1>AI Platform Engineering</h1><h2 class="csub">El blocker eres tú</h2>' +
+      // La portada tiene dos páginas: el título y, con el primer ▶, quién da la charla.
+      return '<div class="cover"><div data-pg="1"><div class="k">BarCamp</div><h1>AI Platform Engineering</h1><h2 class="csub">El blocker eres tú</h2>' +
         '<p>Cada vez que automatizamos un paso, el cuello de botella salta al siguiente. Y cada avance trae su problema de seguridad.</p>' +
-        '<div class="go">▶ o flecha derecha para empezar</div></div>';
+        '<div class="go">▶ o flecha derecha para empezar</div></div>' +
+        '<div class="about" data-pg="2">' +
+        '<span class="av"><img src="' + (location.pathname.indexOf("/en/") >= 0 ? "../" : "") + 'img/shailyn.webp" alt="Shailyn Ortiz" width="400" height="400"></span>' +
+        '<div><div class="k">Quién soy</div>' +
+        '<h1>Shailyn Ortiz</h1><h2 class="csub">Staff DevSecOps (L6) <span class="amp">&amp;</span> Platform Engineer</h2><div class="byline">Platform + AI + Security <span>·</span> ex Senior SDET</div>' +
+        '<p class="hook">Más de 10 años optimizando plataformas.</p>' +
+        '<ul class="does"><li><b>Agentes de IA para seguridad:</b> threat hunting e incidentes, con RAG y modelos propios (vLLM, EKS).</li>' +
+        '<li><b>Compliance como guardrails:</b> controles y remediación automática dentro del flujo del desarrollador.</li>' +
+        '<li><b>Pipelines más rápidos:</b> deploys casi instantáneos y rollbacks casi instantáneos.</li></ul>' +
+        '<div class="links"><a href="https://do.linkedin.com/in/shailyn-ortiz-175576124" target="_blank" rel="noopener">LinkedIn</a>' +
+        '<a href="https://github.com/sjortiz" target="_blank" rel="noopener">github.com/sjortiz</a>' +
+        '<a href="https://x.com/root_or_death" target="_blank" rel="noopener">@root_or_death</a></div></div></div></div>';
     }
     if (p.k === "mapa") return '<div class="board" id="board"><div><span class="bk">Puntaje</span><b class="bs">0</b></div>' +
       '<div><span class="bk">Extras explorados</span><b class="bx">0</b></div><div><span class="bk">Récord en este navegador</span><b class="br">0</b></div>' +

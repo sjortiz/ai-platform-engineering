@@ -1179,5 +1179,19 @@
  ".minibox": ".minibox",
  ".mini": ".mini",
  "<a href=\"por-dimension.html\">Por dimensión</a><span aria-current=\"page\">Por años</span>": "<a href=\"por-dimension.html\">By dimension</a><span aria-current=\"page\">By year</span>",
- "<span aria-current=\"page\">Por dimensión</span><a href=\"por-anos.html\">Por años</a>": "<span aria-current=\"page\">By dimension</span><a href=\"por-anos.html\">By year</a>"
+ "<span aria-current=\"page\">Por dimensión</span><a href=\"por-anos.html\">Por años</a>": "<span aria-current=\"page\">By dimension</span><a href=\"por-anos.html\">By year</a>",
+ "<div class=\"cover\"><div data-pg=\"1\"><div class=\"k\">BarCamp</div><h1>AI Platform Engineering</h1><h2 class=\"csub\">El blocker eres tú</h2>": "<div class=\"cover\"><div data-pg=\"1\"><div class=\"k\">BarCamp</div><h1>AI Platform Engineering</h1><h2 class=\"csub\">You are the blocker</h2>",
+ "<div class=\"about\" data-pg=\"2\">": "<div class=\"about\" data-pg=\"2\">",
+ "<div><div class=\"k\">Quién soy</div>": "<div><div class=\"k\">About me</div>",
+ "<div class=\"links\"><a href=\"https://do.linkedin.com/in/shailyn-ortiz-175576124\" target=\"_blank\" rel=\"noopener\">LinkedIn</a>": "<div class=\"links\"><a href=\"https://do.linkedin.com/in/shailyn-ortiz-175576124\" target=\"_blank\" rel=\"noopener\">LinkedIn</a>",
+ "<a href=\"https://github.com/sjortiz\" target=\"_blank\" rel=\"noopener\">github.com/sjortiz</a>": "<a href=\"https://github.com/sjortiz\" target=\"_blank\" rel=\"noopener\">github.com/sjortiz</a>",
+ "<a href=\"https://x.com/root_or_death\" target=\"_blank\" rel=\"noopener\">@root_or_death</a></div></div></div></div>": "<a href=\"https://x.com/root_or_death\" target=\"_blank\" rel=\"noopener\">@root_or_death</a></div></div></div></div>",
+ "/en/": "/en/",
+ "<span class=\"av\"><img src=\"": "<span class=\"av\"><img src=\"",
+ "img/shailyn.webp\" alt=\"Shailyn Ortiz\" width=\"400\" height=\"400\"></span>": "img/shailyn.webp\" alt=\"Shailyn Ortiz\" width=\"400\" height=\"400\"></span>",
+ "<li><b>Compliance como guardrails:</b> controles y remediación automática dentro del flujo del desarrollador.</li>": "<li><b>Compliance as guardrails:</b> controls and automatic remediation inside the developer workflow.</li>",
+ "<h1>Shailyn Ortiz</h1><h2 class=\"csub\">Staff DevSecOps (L6) <span class=\"amp\">&amp;</span> Platform Engineer</h2><div class=\"byline\">Platform + AI + Security <span>·</span> ex Senior SDET</div>": "<h1>Shailyn Ortiz</h1><h2 class=\"csub\">Staff DevSecOps (L6) <span class=\"amp\">&amp;</span> Platform Engineer</h2><div class=\"byline\">Platform + AI + Security <span>·</span> ex Senior SDET</div>",
+ "<ul class=\"does\"><li><b>Agentes de IA para seguridad:</b> threat hunting e incidentes, con RAG y modelos propios (vLLM, EKS).</li>": "<ul class=\"does\"><li><b>AI agents for security:</b> threat hunting and incidents, with RAG and self-hosted models (vLLM, EKS).</li>",
+ "<li><b>Pipelines más rápidos:</b> deploys casi instantáneos y rollbacks casi instantáneos.</li></ul>": "<li><b>Faster pipelines:</b> near-instant deploys and near-instant rollbacks.</li></ul>",
+ "<p class=\"hook\">Más de 10 años optimizando plataformas.</p>": "<p class=\"hook\">More than 10 years optimizing platforms.</p>"
 }
