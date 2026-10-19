@@ -68,17 +68,12 @@ for i in GLOS:
     node(f"g{i}", "glos", (x0 + x1) / 2, (y0 + y1) / 2)
 edge("start", "a1", "main")
 SUPOF = {}
-# Como mucho cuatro vecinos por nodo, uno por flecha: ← paso anterior, → siguiente (el vocabulario
-# queda en el camino), el extra y la rama de seguridad (que termina en sus preguntas) arriba o abajo,
-# del lado donde haya lugar.
+# Como mucho cuatro vecinos por nodo, uno por flecha: ← parada anterior, → siguiente (el vocabulario
+# y las banderas de seguridad quedan en el camino), el extra y las preguntas de seguridad arriba o
+# abajo, del lado donde haya lugar.
 for i in range(1, N + 1):
     ai, after = f"a{i}", nxt(i)
     gl = f"g{i + 1}" if i + 1 in GLOS else None
-    if gl:
-        edge(ai, gl, "main")
-        edge(gl, after, "main")
-    else:
-        edge(ai, after, "main")
     tops = [x["id"] for x in zip2.SEC if x["at"] == i]
     x, y = NODES[ai]["xy"]
     sd = 1 if y <= 128 else -1  # la seguridad va hacia el lado con más lugar y el extra al otro
@@ -89,6 +84,11 @@ for i in range(1, N + 1):
         node(f"s{t}", "seg", x + STEPW * .5 * n, y + 60 * sd)
         edge(prev, f"s{t}", "sec")
         prev = f"s{t}"
+    if gl:
+        edge(prev, gl, "main")
+        edge(gl, after, "main")
+    else:
+        edge(prev, after, "main")
     if i in SUPA:
         node(f"xa{i}", "xa", x, y - 44 * sd)
         edge(ai, f"xa{i}", "sup")
@@ -873,12 +873,14 @@ page = f"""<title>AI Platform Engineering</title>
     }});
   }}
   function curNode() {{ return SUP ? "x" + SUP + POS[P].i : POS[P].node; }}
-  // Todo desvío (seguridad, extras, preguntas) tiene un atajo al siguiente punto de la línea base.
+  // La línea base son todas las paradas en orden, banderas de seguridad incluidas; todo desvío (extras,
+  // preguntas) tiene un atajo a la siguiente.
   function nextMain() {{
-    for (var j = P + 1; j < POS.length; j++) if (/^(avance|glos|hoy)$/.test(POS[j].k)) return POS[j].node;
+    for (var j = P + 1; j < POS.length; j++) if (/^(avance|glos|seg|hoy)$/.test(POS[j].k)) return POS[j].node;
     return null;
   }}
-  function shortcut(cn) {{ return !SUP && /^([ag][0-9]|start$|hoy$)/.test(cn) ? null : nextMain(); }}
+  function prevMain() {{ return P > 0 && POS[P - 1].node !== POS[P].node ? POS[P - 1].node : null; }}
+  function shortcut(cn) {{ return SUP ? nextMain() : null; }}
   // Flecha que lleva al nodo n desde donde está la serpiente (para los textos de ayuda).
   function arrowTo(n) {{ var o = options(); for (var k in o) if (o[k] === n) return DIRS[k][2]; return ""; }}
   function arrowBack() {{ return arrowTo((D.adj[curNode()] || [])[0]); }}
@@ -887,11 +889,11 @@ page = f"""<title>AI Platform Engineering</title>
   // Reparte las flechas entre los vecinos para que todos tengan una, lo más alineada posible.
   function options() {{
     var cn = curNode(), h = D.nodes[cn], sc = shortcut(cn), ns = (D.adj[cn] || []).slice(0, sc ? 3 : 4), keys = Object.keys(DIRS), best = null, bestS = -1e9;
-    // → es siempre "siguiente": en la línea base el próximo paso; en un desvío, la próxima parada
-    // (seguridad 2 de 2) o el atajo a la línea base.
-    var nx = sc && !SUP && POS[P + 1] && POS[P + 1].node, fwd = sc ? (ns.indexOf(nx) >= 0 ? nx : sc) : nextMain();
+    // → es siempre "siguiente" y ← "anterior" en la línea base; en un desvío, → es el atajo a la siguiente parada.
+    var fwd = nextMain(), bk = SUP ? null : prevMain();
     function score(n, k) {{
       if (n === fwd) return k === "ArrowRight" ? 100 : -100;
+      if (n === bk) return k === "ArrowLeft" ? 100 : -100;
       var xy = D.nodes[n], dx = xy[0] - h[0], dy = xy[1] - h[1];
       return (dx * DIRS[k][0] + dy * DIRS[k][1]) / (Math.hypot(dx, dy) || 1);
     }}
