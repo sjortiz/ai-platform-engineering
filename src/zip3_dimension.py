@@ -373,6 +373,8 @@ page = f"""<title>AI Platform Engineering</title>
     transform-box:fill-box;animation:popup .9s ease-out forwards}}
   @keyframes popup{{to{{transform:translateY(-22px);opacity:0}}}}
   .mdot{{cursor:pointer}}
+  /* La serpiente se dibuja encima del mapa: los clics pasan a las paradas y estrellas de abajo. */
+  #msnake,#mkeys{{pointer-events:none}}
   .mdot:focus{{outline:none}}
   .mdot .hit{{fill:transparent}}
   .mdot circle{{fill:var(--bg);stroke:var(--accent);stroke-width:2}}
