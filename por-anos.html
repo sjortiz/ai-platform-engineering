@@ -334,8 +334,8 @@
     transform-box:fill-box;animation:popup .9s ease-out forwards}
   @keyframes popup{to{transform:translateY(-22px);opacity:0}}
   .mdot{cursor:pointer}
-  /* La serpiente se dibuja encima del mapa: los clics pasan a las paradas y estrellas de abajo. */
-  #msnake{pointer-events:none}
+  /* La serpiente y la guía al año (invisible fuera de la parada actual) no tapan los clics de las paradas y estrellas. */
+  #msnake,.ghost{pointer-events:none}
   .mdot:focus{outline:none}
   .mdot .hit{fill:transparent}
   .mdot circle{fill:var(--bg);stroke:var(--accent);stroke-width:2.4}
@@ -1321,7 +1321,8 @@
     m.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick(); } });
   });
   document.addEventListener("keydown", function (ev) {
-    if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup,[data-go]")) return;
+    // Enter y Espacio sobre una parada o estrella los atiende ella; las flechas siguen funcionando después de un clic.
+    if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.closest && ev.target.closest(".mdot,.msup,[data-go]")) return;
     if (ev.key === "ArrowRight" || ev.key === "PageDown" || ev.key === " ") { ev.preventDefault(); if (!nextPage()) go(P + 1); }
     else if (ev.key === "ArrowLeft" || ev.key === "PageUp") { ev.preventDefault(); if (!prevPage()) { LANDLAST = P > 0; go(P - 1); } }
     else if (ev.key === "Home") { go(0); } else if (ev.key === "End") { go(LAST); }

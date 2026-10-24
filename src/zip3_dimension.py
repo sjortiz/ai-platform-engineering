@@ -1411,7 +1411,8 @@ page = f"""<title>AI Platform Engineering</title>
     m.addEventListener("keydown", function (ev) {{ if (ev.key === "Enter" || ev.key === " ") {{ ev.preventDefault(); pick(); }} }});
   }});
   document.addEventListener("keydown", function (ev) {{
-    if (ev.target && ev.target.closest && ev.target.closest(".mdot,.msup")) return;
+    // Enter y Espacio sobre una parada o estrella los atiende ella; las flechas siguen funcionando después de un clic.
+    if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.closest && ev.target.closest(".mdot,.msup")) return;
     if (ev.key === "ArrowRight" && nextPage()) {{ ev.preventDefault(); return; }}
     if (ev.key === "ArrowLeft" && prevPage()) {{ ev.preventDefault(); return; }}
     if (DIRS[ev.key]) {{ ev.preventDefault(); var o = options()[ev.key]; if (o) {{ NEXTDIR = DIRS[ev.key]; moveTo(o); }} }}
