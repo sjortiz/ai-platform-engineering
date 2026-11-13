@@ -13,10 +13,8 @@ STEPS = [
          when="antes de 2020", d="Ticket, branch, PR, review, deploy, QA y PROD. Primero a mano, después con pipelines y monitoreo en producción."),
     dict(n="Chat y autocompletado", neck="escribir código", t="Autocompletado y chat",
          when="aparece 2021 · uso real 2023", d="Copilot y ChatGPT. Se escribe más rápido, aparece el vibe coding y la respuesta es la ingeniería de siempre: tests, ambientes y revisión."),
-    dict(n="Agentes de código", neck="revisión de PRs", t="Agentes de código",
-         when="aparece 2023 · uso real 2025", d="Agentes en el IDE y la CLI con archivos de reglas. Se hacen 5 cambios en el tiempo de 1 y la revisión humana no da abasto."),
-    dict(n="Revisión con IA", neck="QA y ambientes", t="Agentes de revisión de código",
-         when="aparece 2023 · uso real 2024", d="Revisan cada PR antes que una persona."),
+    dict(n="Agentes de código", neck="QA y ambientes", t="Agentes de código",
+         when="aparece 2023 · uso real 2025", d="Agentes en el IDE, la CLI y el PR con archivos de reglas: uno escribe el cambio y otro lo revisa antes que una persona. Se hacen 5 cambios en el tiempo de 1."),
     dict(n="Ambiente por PR", neck="incidentes en PROD", t="Pruebas y ambiente por PR",
          when="uso real 2025", d="Tests generados y un ambiente efímero por PR. Más cambios llegan a producción, y con ellos más incidentes."),
     dict(n="Agentes de incidentes", neck="qué construir", t="Agentes de incidentes",
@@ -42,15 +40,15 @@ SEC = [
     dict(id="inj", at=2, rail=False, n="Prompt injection", st="crit", rel="abre", d="No hay defensa completa. Lo práctico es no juntar datos no confiables, datos privados y una salida al exterior."),
     dict(id="cls", at=2, n="Guardrails", st="med", rel="abre", falta=True, d="Clasificadores de entrada y salida: paran ataques conocidos, no los nuevos."),
     dict(id="har", at=3, n="Harness y sandbox", st="ok", rel="abre", d="Permisos de herramientas, sandbox y hooks: qué puede usar el agente y dónde."),
-    dict(id="trz", at=6, n="Trazabilidad", st="med", rel="abre", falta=True, d="Langfuse, LangSmith y OpenTelemetry muestran qué hizo cada agente: tool calls, permisos y resultados. Falta el porqué y quién lo delegó."),
-    dict(id="idn", at=7, n="Identidad de agentes", st="crit", rel="abre", falta=True, d="Permisos delegados, mínimo privilegio y revocación para agentes."),
-    dict(id="mcp", at=7, rail=False, n="MCP y memoria", st="crit", rel="abre", d="Servidores MCP de terceros y memoria envenenada como vía de ataque."),
-    dict(id="rag", at=8, n="Acceso en RAG", st="crit", rel="abre", d="Los documentos indexados traen instrucciones escondidas, y los permisos por usuario son difíciles de respetar al buscar."),
-    dict(id="gw", at=9, n="AI gateway", st="ok", rel="pieza", d="El mismo gateway de costos es el punto de control: clasificadores y enmascarado de datos personales."),
-    dict(id="dat", at=12, rail=False, n="Datos al proveedor", st="ok", rel="resuelve", d="Con self-hosting los datos se quedan en tu infraestructura."),
-    dict(id="sup", at=12, n="Safetensors", st="med", rel="abre", d="Safetensors evita que un modelo ejecute código; la procedencia y las puertas traseras siguen sin resolver."),
+    dict(id="trz", at=5, n="Trazabilidad", st="med", rel="abre", falta=True, d="Langfuse, LangSmith y OpenTelemetry muestran qué hizo cada agente: tool calls, permisos y resultados. Falta el porqué y quién lo delegó."),
+    dict(id="idn", at=6, n="Identidad de agentes", st="crit", rel="abre", falta=True, d="Permisos delegados, mínimo privilegio y revocación para agentes."),
+    dict(id="mcp", at=6, rail=False, n="MCP y memoria", st="crit", rel="abre", d="Servidores MCP de terceros y memoria envenenada como vía de ataque."),
+    dict(id="rag", at=7, n="Acceso en RAG", st="crit", rel="abre", d="Los documentos indexados traen instrucciones escondidas, y los permisos por usuario son difíciles de respetar al buscar."),
+    dict(id="gw", at=8, n="AI gateway", st="ok", rel="pieza", d="El mismo gateway de costos es el punto de control: clasificadores y enmascarado de datos personales."),
+    dict(id="dat", at=11, rail=False, n="Datos al proveedor", st="ok", rel="resuelve", d="Con self-hosting los datos se quedan en tu infraestructura."),
+    dict(id="sup", at=11, n="Safetensors", st="med", rel="abre", d="Safetensors evita que un modelo ejecute código; la procedencia y las puertas traseras siguen sin resolver."),
 ]
-CROSS = [dict(src="har", to=6, label="habilita")]
+CROSS = [dict(src="har", to=5, label="habilita")]
 
 ST = {"ok": "Resuelto", "med": "Parcial", "crit": "Abierto"}
 

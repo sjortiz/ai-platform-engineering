@@ -245,10 +245,10 @@ mini.append('<g id="msnake"></g><g id="mkeys" aria-hidden="true"></g>')
 MINI_SVG = f'<svg class="mini" viewBox="0 0 {MW} {MH}" role="navigation" aria-label="Índice de la charla">{"".join(mini)}</svg>'
 GROUPS = [
     ("Entregar y escribir", "pasos 1–2", [1, 2]),
-    ("Más cambios, más rápido", "pasos 3–5", [3, 4, 5]),
-    ("Operar y pedir", "pasos 6–7", [6, 7]),
-    ("Contexto y costo", "pasos 8–10", [8, 9, 10]),
-    ("Modelos propios", "pasos 11–13", [11, 12, 13]),
+    ("Más cambios, más rápido", "pasos 3–4", [3, 4]),
+    ("Operar y pedir", "pasos 5–6", [5, 6]),
+    ("Contexto y costo", "pasos 7–9", [7, 8, 9]),
+    ("Modelos propios", "pasos 10–12", [10, 11, 12]),
 ]
 TAGST = {"ok": "int", "med": "ext", "crit": "pub"}
 

@@ -45,7 +45,7 @@ def cap_of_year(y):
 
 STEPS = zip2.STEPS
 step_cap = {i: cap_of_year(C.uso_real(s["when"])) for i, s in enumerate(STEPS, 1)}
-step_cap[7] = 5  # uso real 2025–2026: va con Hoy
+step_cap[6] = 5  # uso real 2025–2026: va con Hoy
 sec_first = {}
 for h in C.H:
     for k, v in h["tg"]:

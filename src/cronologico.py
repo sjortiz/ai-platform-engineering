@@ -16,17 +16,17 @@ MESES = dict(ene=1, feb=2, mar=3, abr=4, may=5, jun=6, jul=7, ago=8, sep=9, oct=
 # Hitos que afectaron a más de un paso o tema, además del suyo.
 EXTRA_TARGETS = {
     "Function calling": [("a", 3)],
-    "Model Context Protocol (MCP)": [("a", 7), ("s", "idn"), ("s", "mcp")],
-    "Claude 3.5 Sonnet dispara los benchmarks": [("a", 4)],
+    "Model Context Protocol (MCP)": [("a", 6), ("s", "idn"), ("s", "mcp")],
+    "Claude 3.5 Sonnet dispara los benchmarks": [("a", 3)],
     "ChatGPT": [("s", "inj")],
     "GPT-4": [("a", 3)],
-    "Prompt caching": [("a", 8)],
-    "Paper de LoRA": [("a", 10)],
-    "QLoRA": [("a", 10)],
+    "Prompt caching": [("a", 7)],
+    "Paper de LoRA": [("a", 9)],
+    "QLoRA": [("a", 9)],
     "vLLM y PagedAttention": [("s", "dat")],
-    "Llama 2 con licencia comercial": [("a", 12), ("a", 13)],
-    "DeepSeek R1": [("a", 9), ("a", 11)],
-    "Playwright MCP: un agente maneja el navegador": [("a", 6)],
+    "Llama 2 con licencia comercial": [("a", 11), ("a", 12)],
+    "DeepSeek R1": [("a", 8), ("a", 10)],
+    "Playwright MCP: un agente maneja el navegador": [("a", 5)],
     "GraphRAG": [("s", "rag")],
 }
 
@@ -57,8 +57,8 @@ for sid, hs in SECHITOS.items():
     at = next(x["at"] for x in zip2.SEC if x["id"] == sid)
     for f, t in hs:
         raw.append((f, t, [("s", sid), ("a2", at)]))
-for f, t in SUPA[5]["hitos"]:
-    raw.append((f, t, [("a", 5)]))
+for f, t in SUPA[4]["hitos"]:
+    raw.append((f, t, [("a", 4)]))
 
 merged = {}
 for f, t, tg in raw:

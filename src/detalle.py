@@ -25,31 +25,21 @@ INFO = {
         neck_why="La IA ayuda línea por línea, no tarea por tarea. Escribir código sigue siendo lo lento.",
     ),
     3: dict(
-        lead="El agente deja de sugerir y ejecuta tareas completas: lee el repo, cambia archivos, corre los tests y abre el PR. Con reglas por repo y varios agentes en paralelo, se hacen 5 cambios en el tiempo de 1.",
-        hitos=[("oct 2022", "ReAct: razonar y usar herramientas"), ("mar 2023", "AutoGPT, todavía no funcionaba"), ("oct 2023", "SWE-bench"),
-               ("jun 2024", "Claude 3.5 Sonnet dispara los benchmarks"), ("feb 2025", "Claude Code"), ("may 2025", "Codex"), ("2025", "AGENTS.md como convención")],
-        tools=["Claude Code", "Codex", "Cursor", "Copilot agent mode", "Aider"],
-        hacer=["Un AGENTS.md o CLAUDE.md por repo: cómo instalar, validar y probar, y qué no hacer.",
+        lead="El agente deja de sugerir y ejecuta tareas completas: lee el repo, cambia archivos, corre los tests y abre el PR. Otro agente hace la primera revisión de cada PR con las mismas reglas del repo: bugs, secretos y tests que faltan. La persona revisa diseño y riesgo, y sigue aprobando.",
+        hitos=[("oct 2022", "ReAct: razonar y usar herramientas"), ("mar 2023", "AutoGPT, todavía no funcionaba"), ("2023", "CodeRabbit"), ("oct 2023", "SWE-bench"),
+               ("2024", "Copilot code review en preview"), ("jun 2024", "Claude 3.5 Sonnet dispara los benchmarks"), ("feb 2025", "Claude Code"), ("may 2025", "Codex"),
+               ("2025", "Revisión con Claude o Codex desde el PR"), ("2025", "AGENTS.md como convención")],
+        tools=["Claude Code", "Codex", "Cursor", "CodeRabbit", "Copilot agent mode", "Claude Code Action"],
+        hacer=["Un AGENTS.md o CLAUDE.md por repo: cómo instalar, validar y probar, qué no hacer y qué comentar al revisar.",
                "Formas de validar sin ejecutar: plan, dry-run, preview del pipeline.",
-               "Ramas protegidas: el agente abre PRs, nunca mergea ni aprueba.",
+               "La revisión del agente es un check obligatorio y corre antes que la humana.",
+               "Ramas protegidas: el agente abre PRs y comenta, nunca mergea ni aprueba.",
                "Templates para que todos los repos se parezcan y el agente no aprenda cada uno desde cero."],
-        medir=["PRs por persona por semana.", "Porcentaje de PRs que pasan CI a la primera.", "Tiempo que un PR espera revisión."],
-        seg="Un agente que ejecuta comandos necesita límites: qué herramientas puede usar, en qué carpetas y con qué aprobación.",
-        neck_why="Llegan 5 veces más PRs y la revisión humana no escala.",
+        medir=["PRs por persona por semana.", "Porcentaje de PRs que pasan CI a la primera.", "Tiempo hasta la primera revisión.", "Comentarios del revisor que el equipo acepta."],
+        seg="Un agente que ejecuta comandos necesita límites: qué herramientas puede usar, en qué carpetas y con qué aprobación. El que revisa lee PRs que no controla, por eso solo comenta.",
+        neck_why="El código se escribe y se revisa rápido, pero probarlo en un ambiente compartido es lento.",
     ),
     4: dict(
-        lead="Un agente hace la primera revisión de cada PR: bugs, estilo, seguridad y consistencia con el resto del código. La persona revisa diseño y riesgo, y sigue aprobando.",
-        hitos=[("2023", "CodeRabbit"), ("2024", "Copilot code review en preview"), ("2025", "Revisión con Claude o Codex desde el PR")],
-        tools=["CodeRabbit", "Copilot code review", "Greptile", "Claude Code Action", "Codex"],
-        hacer=["La revisión del agente es obligatoria y corre antes que la humana.",
-               "Las reglas del repo son el contexto del revisor.",
-               "El agente comenta; aprobar sigue siendo de una persona.",
-               "Medir el ruido y ajustar las reglas cuando comenta de más."],
-        medir=["Tiempo hasta la primera revisión.", "Comentarios útiles frente a ruido.", "Defectos que llegan a producción."],
-        seg="El revisor lee contenido que no controla: un PR puede traer instrucciones para engañarlo. Por eso nunca tiene permiso de merge.",
-        neck_why="El código se revisa rápido, pero probarlo en un ambiente compartido es lento.",
-    ),
-    5: dict(
         lead="Cada PR tiene su propio ambiente y sus pruebas. Los agentes generan tests y QA prueba antes del merge, no después.",
         hitos=[("2019–2020", "Preview deployments en Vercel y Netlify"), ("2020+", "Ambientes efímeros en Kubernetes"), ("2025", "Agentes que escriben y corren pruebas e2e")],
         tools=["Vercel", "Netlify", "Kubernetes con namespaces por PR", "Terraform", "Playwright"],
@@ -61,7 +51,7 @@ INFO = {
         seg="Un ambiente por PR multiplica las credenciales y los datos de prueba: ninguno debe tener datos personales reales.",
         neck_why="Más cambios llegan más rápido a producción, y con ellos más incidentes.",
     ),
-    6: dict(
+    5: dict(
         lead="Los agentes ya no esperan a que alguien les escriba: los dispara un evento. Un deploy activa un agente que compara errores y latencia antes y después; una alerta activa el triage, que correlaciona logs, cambios recientes y runbooks. El agente deja su análisis y una persona decide.",
         hitos=[("jun 2023", "Function calling"), ("nov 2024", "Model Context Protocol (MCP)"), ("2025", "Servidores MCP de observabilidad y agentes SRE")],
         tools=["MCP de New Relic, Datadog, Grafana o Sentry", "PagerDuty", "Webhooks de deploy", "Claude Agent SDK", "LangGraph"],
@@ -73,7 +63,7 @@ INFO = {
         seg="Para dejar que un agente toque producción hay que poder reconstruir qué hizo: cada llamada a una herramienta, con qué permiso y qué devolvió.",
         neck_why="Operar ya no es lo lento. Lo lento es decidir bien qué construir.",
     ),
-    7: dict(
+    6: dict(
         lead="Producto pide funcionalidades sin contexto técnico. Un agente de intake hace las preguntas que faltan, escribe la especificación y los criterios de aceptación, ubica dónde va el cambio y abre un PR con su ambiente de preview. Ingeniería revisa y aprueba.",
         hitos=[("2024", "Prototipos generados con v0 y Lovable"), ("2025", "MCP de Jira, Linear y Notion"), ("2025–2026", "Agentes de intake conectados al repo")],
         tools=["MCP de Jira, Linear o Notion", "Lovable", "v0", "Claude", "Ambientes de preview"],
@@ -85,7 +75,7 @@ INFO = {
         seg="El agente actúa en nombre de quien pide. Eso abre la pregunta de identidad: con qué permisos actúa y quién responde por lo que hace.",
         neck_why="El agente no conoce las reglas del negocio, las decisiones anteriores ni el vocabulario de la empresa.",
     ),
-    8: dict(
+    7: dict(
         lead="Entrenar un modelo propio era imposible por costo, datos y talento. La salida fue darle contexto al modelo en cada consulta: primero RAG simple, después búsqueda híbrida con reranking, grafos de conocimiento y búsqueda agéntica.",
         hitos=[("may 2020", "Paper de RAG"), ("oct–nov 2022", "LangChain y LlamaIndex"), ("dic 2022", "Embeddings baratos (ada-002)"),
                ("abr 2024", "GraphRAG"), ("sep 2024", "KAG y Contextual Retrieval"), ("2025", "Búsqueda agéntica")],
@@ -98,7 +88,7 @@ INFO = {
         seg="Los documentos indexados pueden traer instrucciones escondidas, y la búsqueda tiene que respetar lo que cada usuario puede ver.",
         neck_why="Más contexto por llamada y agentes que leen todo: los tokens se disparan.",
     ),
-    9: dict(
+    8: dict(
         lead="Cada tarea va al modelo más barato que la resuelve: Haiku clasifica, Sonnet programa, Opus diseña. Un gateway centraliza las llamadas, aplica presupuestos por equipo y cachea el contexto que se repite.",
         hitos=[("mar 2024", "Familias de modelos por tamaño: Haiku, Sonnet y Opus"), ("abr 2024", "Batch API"), ("jul 2024", "Routers de modelos (RouteLLM)"),
                ("ago 2024", "Prompt caching"), ("sep 2024", "Modelos de razonamiento, que gastan más tokens")],
@@ -112,7 +102,7 @@ INFO = {
         seg="El gateway es también el punto de control de seguridad: ahí van los clasificadores, el enmascarado de datos personales y el registro de qué datos salen.",
         neck_why="Incluso el modelo más chico de un proveedor es caro para millones de tareas simples.",
     ),
-    10: dict(
+    9: dict(
         lead="Modelos de 1 a 8 mil millones de parámetros resuelven bien una tarea acotada (clasificar, extraer, enrutar) por una fracción del costo. Se entrenan con las salidas de un modelo grande (destilación).",
         hitos=[("sep 2023", "Mistral 7B"), ("dic 2023", "Phi-2"), ("feb 2024", "Gemma"), ("abr 2024", "Phi-3"), ("sep 2024", "Llama 3.2 1B y 3B, Qwen 2.5"), ("2025", "Gemma 3 y Qwen3")],
         tools=["Phi", "Gemma", "Llama", "Qwen", "Mistral"],
@@ -123,7 +113,7 @@ INFO = {
         seg="Los modelos chicos son más fáciles de manipular: los guardrails del gateway importan más.",
         neck_why="Un modelo chico genérico no conoce tu formato ni tu dominio.",
     ),
-    11: dict(
+    10: dict(
         lead="LoRA entrena un adapter pequeño encima de un modelo abierto en vez de entrenar el modelo completo. QLoRA lo volvió posible en una sola GPU. Es la primera forma real de personalizar un modelo para una empresa.",
         hitos=[("jun 2021", "Paper de LoRA"), ("may 2023", "QLoRA"), ("jul 2023", "Llama 2 con licencia comercial"), ("ago 2023", "Fine-tuning administrado"), ("2024", "Unsloth y Axolotl")],
         tools=["Hugging Face PEFT", "Unsloth", "Axolotl", "Fine-tuning de Bedrock u OpenAI"],
@@ -135,7 +125,7 @@ INFO = {
         seg="Lo que aprende un adapter no tiene permisos y no se puede borrar sin reentrenar.",
         neck_why="Los adapters necesitan dónde servirse, y la API del proveedor no siempre lo permite.",
     ),
-    12: dict(
+    11: dict(
         lead="Los modelos corren en tu infraestructura. Un servidor sirve varios adapters LoRA a la vez; la cuantización y los modelos MoE bajan la memoria necesaria. Se paga GPU fija en vez de tokens.",
         hitos=[("jun 2023", "vLLM y PagedAttention"), ("2023", "Cuantización GPTQ y AWQ"), ("nov 2023", "Servir muchos adapters LoRA a la vez"),
                ("dic 2023", "Mixtral, modelo MoE abierto"), ("ene 2025", "DeepSeek R1"), ("ago 2025", "gpt-oss")],
@@ -147,7 +137,7 @@ INFO = {
         seg="Los datos ya no salen al proveedor. A cambio, hay que confiar en los modelos que se descargan.",
         neck_why="Hay que operar GPUs, capacidad y actualizaciones de modelos.",
     ),
-    13: dict(
+    12: dict(
         lead="Modelos y agentes corren en la laptop o en el edge: sin costo por token, sin red y sin que los datos salgan de la máquina. Los modelos Hermes trajeron tool calling a modelos que corren en local.",
         hitos=[("mar 2023", "llama.cpp"), ("jul 2023", "Ollama"), ("ago 2023", "Formato GGUF"), ("dic 2023", "MLX"),
                ("mar 2024", "Hermes 2 Pro con tool calling"), ("may 2024", "PCs con NPU"), ("ago 2024", "Hermes 3")],
@@ -159,7 +149,7 @@ INFO = {
         seg="Cientos de modelos en máquinas que no controlas: hace falta inventario y verificar de dónde viene cada modelo.",
         neck_why="Hay que confiar en muchos agentes y modelos repartidos por toda la empresa.",
     ),
-    14: dict(
+    13: dict(
         lead="El último cuello de botella es la atención humana: aprobar y decidir. Ya no lo mueve un modelo mejor. Lo mueve poder confiar en lo que hacen los agentes, y eso viene de la pista de seguridad.",
         hitos=[],
         tools=[],
@@ -177,53 +167,50 @@ INFO = {
 LLEVA = {
     1: ["Construye una vez y promueve a cada ambiente", "Aprobaciones en la plataforma", "Cada alerta con dueño y runbook"],
     2: ["Cuentas empresariales, sin retención", "Los mismos gates para el código con IA"],
-    3: ["Un AGENTS.md en cada repo", "Validar sin ejecutar", "El agente abre PRs, no mergea"],
-    4: ["El agente revisa antes que la persona", "Aprobar sigue siendo humano"],
-    5: ["Un ambiente por PR", "Datos sintéticos, nunca de producción"],
-    6: ["Evento → agente → chat → persona", "Empieza por los deploys", "Solo lectura en producción"],
-    7: ["Especificación antes que código", "Preview obligatorio", "Ingeniería aprueba"],
-    8: ["Ingesta versionada, sin datos personales", "Preguntas reales como evals", "Búsqueda híbrida con reranking"],
-    9: ["Un solo gateway", "Presupuesto por equipo", "Cada tarea a su modelo"],
-    10: ["Tareas repetitivas y verificables", "Destila desde el modelo grande"],
-    11: ["Dataset versionado", "Entrena como un build", "Evals antes de promover"],
-    12: ["El modelo propio detrás del mismo gateway", "Compara el costo total antes de migrar"],
-    13: ["Lo sensible, en local", "Un catálogo de modelos aprobados"],
-    14: ["Mide qué aprobaciones son rutinarias", "Automatízalas con clasificadores", "Traza cada acción hasta una persona"],
+    3: ["Un AGENTS.md en cada repo", "El agente revisa antes que la persona", "El agente abre PRs, no mergea ni aprueba"],
+    4: ["Un ambiente por PR", "Datos sintéticos, nunca de producción"],
+    5: ["Evento → agente → chat → persona", "Empieza por los deploys", "Solo lectura en producción"],
+    6: ["Especificación antes que código", "Preview obligatorio", "Ingeniería aprueba"],
+    7: ["Ingesta versionada, sin datos personales", "Preguntas reales como evals", "Búsqueda híbrida con reranking"],
+    8: ["Un solo gateway", "Presupuesto por equipo", "Cada tarea a su modelo"],
+    9: ["Tareas repetitivas y verificables", "Destila desde el modelo grande"],
+    10: ["Dataset versionado", "Entrena como un build", "Evals antes de promover"],
+    11: ["El modelo propio detrás del mismo gateway", "Compara el costo total antes de migrar"],
+    12: ["Lo sensible, en local", "Un catálogo de modelos aprobados"],
+    13: ["Mide qué aprobaciones son rutinarias", "Automatízalas con clasificadores", "Traza cada acción hasta una persona"],
 }
 
 # Un ejemplo concreto por paso, sin datos de clientes.
 EJEMPLO = {
     1: "El mismo artefacto que se probó en QA es el que llega a producción: se construye una vez y se promueve.",
     2: "Alguien pega un stack trace en el chat y tiene una hipótesis de la causa en segundos.",
-    3: "Un cambio de pipeline llega a 13 repos en una tarde: un agente por repo, todos salidos del mismo template, cada cambio validado con un preview que no ejecuta nada.",
-    4: "El revisor marca un secreto expuesto en el PR antes de que lo abra una persona.",
-    5: "Cada PR publica su URL de preview y producto lo prueba antes del merge.",
-    6: "Tres minutos después de un deploy, el agente escribe en el canal: «el error rate subió de 0,2 % a 4 %, viene del cambio en el módulo de pagos, recomiendo rollback». Una persona decide.",
-    7: "Producto escribe «quiero filtrar por fecha». El agente pregunta qué fecha, propone los criterios de aceptación y entrega un preview para validar.",
-    8: "A la pregunta «¿por qué este servicio usa colas?», el agente responde citando el documento de arquitectura y el ticket donde se decidió.",
-    9: "Los tickets se clasifican con el modelo chico y el grande queda para el código: el mismo trabajo, con una factura mucho menor.",
-    10: "Un modelo de 3B enruta cada pedido a la cola correcta en milisegundos, sin pasar por un modelo frontier.",
-    11: "Un adapter aprende el formato de los reportes de la empresa, algo que ningún prompt lograba fijar.",
-    12: "Un solo servidor atiende el modelo base y un adapter por área, detrás del mismo gateway de siempre.",
-    13: "Alguien resume logs con datos sensibles en su laptop y nada sale de la máquina.",
-    14: "Un clasificador deja pasar las acciones rutinarias del agente y le pide permiso a una persona solo para las riesgosas, como un merge.",
+    3: "Un cambio de pipeline llega a 13 repos en una tarde: un agente por repo, todos salidos del mismo template. El agente revisor marca un secreto expuesto en uno de los PRs antes de que lo abra una persona.",
+    4: "Cada PR publica su URL de preview y producto lo prueba antes del merge.",
+    5: "Tres minutos después de un deploy, el agente escribe en el canal: «el error rate subió de 0,2 % a 4 %, viene del cambio en el módulo de pagos, recomiendo rollback». Una persona decide.",
+    6: "Producto escribe «quiero filtrar por fecha». El agente pregunta qué fecha, propone los criterios de aceptación y entrega un preview para validar.",
+    7: "A la pregunta «¿por qué este servicio usa colas?», el agente responde citando el documento de arquitectura y el ticket donde se decidió.",
+    8: "Los tickets se clasifican con el modelo chico y el grande queda para el código: el mismo trabajo, con una factura mucho menor.",
+    9: "Un modelo de 3B enruta cada pedido a la cola correcta en milisegundos, sin pasar por un modelo frontier.",
+    10: "Un adapter aprende el formato de los reportes de la empresa, algo que ningún prompt lograba fijar.",
+    11: "Un solo servidor atiende el modelo base y un adapter por área, detrás del mismo gateway de siempre.",
+    12: "Alguien resume logs con datos sensibles en su laptop y nada sale de la máquina.",
+    13: "Un clasificador deja pasar las acciones rutinarias del agente y le pide permiso a una persona solo para las riesgosas, como un merge.",
 }
 
 ERROR = {
     1: "Reconstruir en cada ambiente: lo que llega a producción no es lo que se probó.",
     2: "Pegar datos de clientes o secretos en un chat con cuenta personal.",
-    3: "Darle al agente permiso de merge para ir más rápido.",
-    4: "Tomar los comentarios del agente como si fueran una aprobación.",
-    5: "Copiar la base de datos de producción al ambiente de prueba.",
-    6: "Dejar que el agente haga el rollback solo desde el primer día.",
-    7: "Saltarse la especificación: el agente construye lo que entendió, no lo que se pidió.",
-    8: "Indexar todo sin limpiar: datos personales y documentos viejos que contradicen a los nuevos.",
-    9: "Medir el costo por token en vez del costo por tarea resuelta.",
-    10: "Pasarse al modelo chico sin compararlo en las mismas evals.",
-    11: "Usar LoRA para darle al modelo conocimiento que cambia; eso le toca a RAG.",
-    12: "Migrar por costo sin contar la operación, las GPUs ociosas y la guardia.",
-    13: "Descargar cualquier modelo de internet sin inventario ni verificación.",
-    14: "Aprobar todo por cansancio: la aprobación humana deja de ser un control.",
+    3: "Darle al agente permiso de merge para ir más rápido, o tomar sus comentarios de revisión como una aprobación.",
+    4: "Copiar la base de datos de producción al ambiente de prueba.",
+    5: "Dejar que el agente haga el rollback solo desde el primer día.",
+    6: "Saltarse la especificación: el agente construye lo que entendió, no lo que se pidió.",
+    7: "Indexar todo sin limpiar: datos personales y documentos viejos que contradicen a los nuevos.",
+    8: "Medir el costo por token en vez del costo por tarea resuelta.",
+    9: "Pasarse al modelo chico sin compararlo en las mismas evals.",
+    10: "Usar LoRA para darle al modelo conocimiento que cambia; eso le toca a RAG.",
+    11: "Migrar por costo sin contar la operación, las GPUs ociosas y la guardia.",
+    12: "Descargar cualquier modelo de internet sin inventario ni verificación.",
+    13: "Aprobar todo por cansancio: la aprobación humana deja de ser un control.",
 }
 
 # Seguridad aplicada: cómo se ve y cómo aplicarlo (con Claude, en tu agente, con qué herramienta).
@@ -290,51 +277,47 @@ ADVX = {
             claude="Claude Team o Enterprise, o la API con la cuenta de la empresa, en vez de cuentas personales.",
             equipo="Una cuenta empresarial para todos y la política de una página firmada por seguridad.",
             tools=["Claude Team", "Copilot Business", "Cursor Business"]),
-    3: dict(ve="# CLAUDE.md\nInstalar:  npm ci\nValidar:   npm run lint && npm test\nNunca:     tocar migrations/ ni .github/\nPRs:       rama feat/<ticket>, un cambio por PR",
-            claude="Claude Code lee el CLAUDE.md de la raíz en cada sesión; ahí van comandos, convenciones y prohibiciones.",
-            equipo="main protegida: el agente abre PRs y el merge exige una aprobación humana.",
-            tools=["Claude Code", "Codex", "Cursor"]),
-    4: dict(ve="on: pull_request\n1. el agente revisa: bugs, secretos, tests que faltan\n2. corre CI\n3. una persona revisa diseño y riesgo, y aprueba",
-            claude="La GitHub Action de Claude Code comenta cada PR usando las reglas del CLAUDE.md.",
-            equipo="Haz la revisión del agente un check obligatorio del PR, sin permiso para aprobar.",
-            tools=["Claude Code GitHub Action", "CodeRabbit", "Copilot code review"]),
-    5: dict(ve="PR #482 abierto  → pr-482.dev.miapp.com (datos sintéticos)\ntests e2e        → 37 pasan\nPR cerrado       → ambiente destruido",
+    3: dict(ve="# CLAUDE.md\nInstalar:  npm ci\nValidar:   npm run lint && npm test\nNunca:     tocar migrations/ ni .github/\nPRs:       rama feat/<ticket>, un cambio por PR\nRevisión:  solo bugs, secretos y tests que faltan",
+            claude="Claude Code lee el CLAUDE.md en cada sesión, y su GitHub Action usa las mismas reglas para revisar cada PR.",
+            equipo="main protegida: la revisión del agente es un check obligatorio sin permiso para aprobar, y el merge exige una persona.",
+            tools=["Claude Code", "Codex", "Claude Code GitHub Action", "CodeRabbit"]),
+    4: dict(ve="PR #482 abierto  → pr-482.dev.miapp.com (datos sintéticos)\ntests e2e        → 37 pasan\nPR cerrado       → ambiente destruido",
             claude="Pídele a Claude los tests e2e del cambio en Playwright y que los corra contra la URL del PR.",
             equipo="La infraestructura recibe el número de PR como variable: un job la crea al abrir y la destruye al cerrar.",
             tools=["Vercel o Netlify", "Terraform workspaces", "Namespaces de Kubernetes", "Playwright"]),
-    6: dict(ve="webhook de deploy → función → agente (solo lectura)\n  lee: error rate ±15 min, logs nuevos, diff del PR\n  escribe en #incidentes:\n  «0,2 % → 4 %, viene de pagos/retry.ts, rollback»",
+    5: dict(ve="webhook de deploy → función → agente (solo lectura)\n  lee: error rate ±15 min, logs nuevos, diff del PR\n  escribe en #incidentes:\n  «0,2 % → 4 %, viene de pagos/retry.ts, rollback»",
             claude="Claude Agent SDK con el MCP de tu observabilidad y del repo, con permisos de solo lectura.",
             equipo="Dispáralo con el webhook de deploy y empieza solo con los deploys a QA.",
             tools=["Claude Agent SDK", "MCP de New Relic o Datadog", "PagerDuty", "Slack o Teams"]),
-    7: dict(ve="Producto: «quiero filtrar pedidos por fecha»\nAgente:   ¿fecha de creación o de entrega? ¿rango o día?\n          criterios: rango; por defecto, últimos 30 días\n          → PR #510 con preview para validar",
+    6: dict(ve="Producto: «quiero filtrar pedidos por fecha»\nAgente:   ¿fecha de creación o de entrega? ¿rango o día?\n          criterios: rango; por defecto, últimos 30 días\n          → PR #510 con preview para validar",
             claude="Un proyecto de Claude con la plantilla de pedido y acceso al repo y a los tickets por MCP.",
             equipo="El agente escribe especificación y criterios en el ticket; producto los aprueba antes de que haya código.",
             tools=["MCP de Jira o Linear", "Claude Code", "Ambientes de preview"]),
-    8: dict(ve="Confluence, tickets, repo\n → quitar datos personales\n → fragmentos de ~500 tokens con su permiso\n → embeddings → índice v12\n → 40 preguntas reales: 36 bien → se promueve",
+    7: dict(ve="Confluence, tickets, repo\n → quitar datos personales\n → fragmentos de ~500 tokens con su permiso\n → embeddings → índice v12\n → 40 preguntas reales: 36 bien → se promueve",
             claude="Contextual Retrieval: Claude le agrega a cada fragmento una línea de contexto antes de indexarlo.",
             equipo="Empieza con pgvector en la base que ya tienes y búsqueda híbrida; mide con preguntas reales.",
             tools=["pgvector", "OpenSearch", "LlamaIndex", "Cohere Rerank"]),
-    9: dict(ve="clasificar un ticket   → Haiku\nescribir código        → Sonnet\ndiseño complejo        → Opus\ncontexto fijo          → cacheado\nreportes nocturnos     → batch, a mitad de precio",
+    8: dict(ve="clasificar un ticket   → Haiku\nescribir código        → Sonnet\ndiseño complejo        → Opus\ncontexto fijo          → cacheado\nreportes nocturnos     → batch, a mitad de precio",
             claude="Prompt caching para el contexto que se repite y Message Batches para lo que no es urgente.",
             equipo="Un gateway con presupuesto por equipo; el costo se mide por tarea resuelta, no por token.",
             tools=["LiteLLM", "Portkey", "OpenRouter"]),
-    10: dict(ve="Ejemplo: enrutar tickets a 12 colas\n1. el modelo grande etiqueta 5.000 tickets\n2. un modelo de 3B aprende de esas etiquetas\n3. evals: coincide con el grande → se cambia",
+    9: dict(ve="Ejemplo: enrutar tickets a 12 colas\n1. el modelo grande etiqueta 5.000 tickets\n2. un modelo de 3B aprende de esas etiquetas\n3. evals: coincide con el grande → se cambia",
              claude="Claude genera y etiqueta el dataset; el modelo chico aprende de esas respuestas.",
              equipo="Elige una tarea con respuesta verificable y compárala en las mismas evals antes de cambiar.",
              tools=["Qwen", "Gemma", "Phi", "Llama"]),
-    11: dict(ve="Ejemplo: reportes con el formato de la empresa\ndataset v3: 2.000 reportes aprobados, sin datos personales\nbase: Llama 3.1 8B → adapter reportes-v3 (pocos MB)\nse promueve solo si gana en evals a prompt + RAG",
+    10: dict(ve="Ejemplo: reportes con el formato de la empresa\ndataset v3: 2.000 reportes aprobados, sin datos personales\nbase: Llama 3.1 8B → adapter reportes-v3 (pocos MB)\nse promueve solo si gana en evals a prompt + RAG",
              claude="En Bedrock se puede ajustar Claude Haiku; con LoRA trabajas sobre modelos abiertos.",
              equipo="LoRA para formato y estilo; el conocimiento que cambia va en RAG.",
              tools=["Unsloth", "Axolotl", "Hugging Face PEFT"]),
-    12: dict(ve="vllm serve meta-llama/Llama-3.1-8B-Instruct \\\n  --enable-lora \\\n  --lora-modules reportes=./adapters/reportes-v3",
+    11: dict(ve="vllm serve meta-llama/Llama-3.1-8B-Instruct \\\n  --enable-lora \\\n  --lora-modules reportes=./adapters/reportes-v3",
              claude="Si el requisito es que los datos no salgan, Claude en Bedrock o Vertex AI dentro de tu cuenta.",
              equipo="El modelo propio va detrás del mismo gateway; compara el costo total contra la API antes de migrar.",
              tools=["vLLM", "SGLang", "KServe"]),
-    13: dict(ve="ollama pull hermes3\nollama run hermes3 \"resume estos logs\"\n# corre en la laptop: sin red, sin costo por token",
+    12: dict(ve="ollama pull hermes3\nollama run hermes3 \"resume estos logs\"\n# corre en la laptop: sin red, sin costo por token",
              claude="Claude para lo que necesita el mejor modelo; local para lo sensible o lo que corre sin conexión.",
              equipo="Un catálogo de modelos aprobados y las mismas herramientas MCP en local y en la nube.",
              tools=["Ollama", "LM Studio", "llama.cpp", "MLX"]),
-    14: dict(ve="acción del agente → clasificador de riesgo\n  rutinaria (leer, abrir un PR) → pasa sola y queda en la traza\n  riesgosa (merge, borrar)       → pide aprobación a una persona",
+    13: dict(ve="acción del agente → clasificador de riesgo\n  rutinaria (leer, abrir un PR) → pasa sola y queda en la traza\n  riesgosa (merge, borrar)       → pide aprobación a una persona",
              claude="Claude Code con reglas allow y deny y hooks: lo rutinario pasa, lo riesgoso pide confirmación.",
              equipo="Cuenta cuántas aprobaciones de la semana fueron rutinarias; esas son las primeras que se automatizan.",
              tools=["Hooks de Claude Code", "Clasificadores de permisos", "Langfuse"]),
@@ -343,17 +326,16 @@ ADVX = {
 LLEVA.update({
     1: ["Publica el artefacto una vez y despliega por digest o versión", "Aprobación obligatoria en QA y PROD, configurada en el ambiente", "Un marker en tu APM por cada deploy"],
     2: ["Una cuenta empresarial para todos, no cuentas personales", "Una política de una página: qué datos nunca van al chat", "El código con IA pasa por los mismos gates"],
-    3: ["Escribe esta semana el CLAUDE.md de tu repo más usado", "Protege main: merge solo con aprobación humana", "Dale al agente un comando que valide sin desplegar"],
-    4: ["Agente como check obligatorio en cada PR", "Sus reglas salen del CLAUDE.md del repo", "Aprobar sigue siendo de una persona"],
-    5: ["Infraestructura parametrizada por número de PR", "Datos sintéticos, nunca una copia de producción", "Ambiente destruido al cerrar el PR"],
-    6: ["Empieza con el evento de deploy, no con todas las alertas", "Solo lectura: métricas, logs y el diff", "Cada análisis enlaza las consultas que usó"],
-    7: ["Plantilla de pedido: problema, para quién, cómo se valida", "Criterios aprobados antes de escribir código", "Preview obligatorio antes del merge"],
-    8: ["Escribe 40 preguntas reales con su respuesta antes de indexar", "Búsqueda híbrida: palabras clave más vectores", "Versiona el índice; reindexa al cambiar de embeddings"],
-    9: ["Asigna tus 5 tareas más frecuentes al modelo más barato que las resuelve", "Cachea el contexto fijo", "Lo que no es urgente, en batch"],
-    10: ["Una tarea repetitiva con respuesta verificable", "Dataset generado por el modelo grande", "Cambia solo si iguala al grande en tus evals"],
-    11: ["LoRA para formato y estilo; RAG para conocimiento", "Dataset versionado y sin datos personales", "El adapter se promueve solo si gana en evals"],
-    12: ["El mismo gateway para modelos propios y de proveedor", "Costo total: GPU, guardia y actualizaciones", "Empieza con un modelo y un adapter"],
-    13: ["Decide qué tareas van en local: datos sensibles o sin red", "Un catálogo de modelos aprobados", "Las mismas herramientas MCP en local y en la nube"],
+    3: ["Escribe esta semana el CLAUDE.md de tu repo más usado", "Revisión del agente como check obligatorio en cada PR", "Protege main: merge solo con aprobación humana"],
+    4: ["Infraestructura parametrizada por número de PR", "Datos sintéticos, nunca una copia de producción", "Ambiente destruido al cerrar el PR"],
+    5: ["Empieza con el evento de deploy, no con todas las alertas", "Solo lectura: métricas, logs y el diff", "Cada análisis enlaza las consultas que usó"],
+    6: ["Plantilla de pedido: problema, para quién, cómo se valida", "Criterios aprobados antes de escribir código", "Preview obligatorio antes del merge"],
+    7: ["Escribe 40 preguntas reales con su respuesta antes de indexar", "Búsqueda híbrida: palabras clave más vectores", "Versiona el índice; reindexa al cambiar de embeddings"],
+    8: ["Asigna tus 5 tareas más frecuentes al modelo más barato que las resuelve", "Cachea el contexto fijo", "Lo que no es urgente, en batch"],
+    9: ["Una tarea repetitiva con respuesta verificable", "Dataset generado por el modelo grande", "Cambia solo si iguala al grande en tus evals"],
+    10: ["LoRA para formato y estilo; RAG para conocimiento", "Dataset versionado y sin datos personales", "El adapter se promueve solo si gana en evals"],
+    11: ["El mismo gateway para modelos propios y de proveedor", "Costo total: GPU, guardia y actualizaciones", "Empieza con un modelo y un adapter"],
+    12: ["Decide qué tareas van en local: datos sensibles o sin red", "Un catálogo de modelos aprobados", "Las mismas herramientas MCP en local y en la nube"],
 })
 
 # Ejemplo expandido junto al bloque condensado de "Cómo se ve".
@@ -379,13 +361,7 @@ EXTRA = {
 
 ## Siempre
 - El código generado pasa por PR, tests y escaneo"""),
-    3: dict(kind="file", name=".claude/settings.json", body="""{
-  "permissions": {
-    "allow": ["Bash(npm test:*)", "Bash(npm run lint)"],
-    "deny":  ["Bash(git push:*)", "Read(./.env)"]
-  }
-}"""),
-    4: dict(kind="file", name=".github/workflows/claude-review.yml", body="""on: pull_request
+    3: dict(kind="file", name=".github/workflows/claude-review.yml", body="""on: pull_request
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -394,23 +370,23 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: "Revisa este PR con las reglas de CLAUDE.md" """),
-    5: dict(kind="diagram", name="Ciclo de vida del ambiente por PR",
+    4: dict(kind="diagram", name="Ciclo de vida del ambiente por PR",
             nodes=["PR abierto", "namespace pr-482", "datos sintéticos", "tests e2e", "preview para producto", "PR cerrado: se destruye"]),
-    6: dict(kind="diagram", name="Agente que se activa con el deploy",
+    5: dict(kind="diagram", name="Agente que se activa con el deploy",
             nodes=["Deploy a QA", "Webhook", "Función", "Agente: métricas, logs y diff (solo lectura)", "Mensaje en #incidentes", "Una persona decide"]),
-    7: dict(kind="file", name="pedido.md", body="""## Problema
+    6: dict(kind="file", name="pedido.md", body="""## Problema
 Soporte no encuentra los pedidos de una fecha.
 ## Para quién
 Equipo de soporte.
 ## Cómo se valida
 - Filtra por rango de fecha de creación
 - Por defecto, los últimos 30 días"""),
-    8: dict(kind="file", name="buscar.sql (pgvector)", body="""SELECT contenido, fuente
+    7: dict(kind="file", name="buscar.sql (pgvector)", body="""SELECT contenido, fuente
 FROM fragmentos
 WHERE permisos && $grupos_del_usuario   -- solo lo que puede ver
 ORDER BY embedding <=> $embedding_pregunta
 LIMIT 8;"""),
-    9: dict(kind="file", name="litellm/config.yaml", body="""model_list:
+    8: dict(kind="file", name="litellm/config.yaml", body="""model_list:
   - model_name: rapido
     litellm_params: { model: anthropic/claude-haiku-5-5 }
   - model_name: codigo
@@ -418,24 +394,24 @@ LIMIT 8;"""),
   - model_name: diseno
     litellm_params: { model: anthropic/claude-opus-5-5 }
 # cada equipo usa una key del proxy con su presupuesto"""),
-    10: dict(kind="file", name="dataset/tickets.jsonl", body="""{"ticket": "No puedo entrar a la app", "cola": "acceso"}
+    9: dict(kind="file", name="dataset/tickets.jsonl", body="""{"ticket": "No puedo entrar a la app", "cola": "acceso"}
 {"ticket": "Me cobraron dos veces", "cola": "facturacion"}
 {"ticket": "¿Cómo cambio mi correo?", "cola": "perfil"}"""),
-    11: dict(kind="file", name="entrenar.py", body="""from peft import LoraConfig
+    10: dict(kind="file", name="entrenar.py", body="""from peft import LoraConfig
 
 config = LoraConfig(
     r=16, lora_alpha=32, lora_dropout=0.05,
     target_modules=["q_proj", "v_proj"],
     task_type="CAUSAL_LM",
 )"""),
-    12: dict(kind="file", name="Llamar al adapter por nombre", body="""curl localhost:8000/v1/chat/completions -d '{
+    11: dict(kind="file", name="Llamar al adapter por nombre", body="""curl localhost:8000/v1/chat/completions -d '{
   "model": "reportes",
   "messages": [{"role": "user", "content": "Reporte del lote 42"}]
 }'"""),
-    13: dict(kind="file", name="Modelfile (Ollama)", body="""FROM hermes3
+    12: dict(kind="file", name="Modelfile (Ollama)", body="""FROM hermes3
 SYSTEM "Resume logs. Nunca envíes datos fuera de esta máquina."
 PARAMETER temperature 0.2"""),
-    14: dict(kind="file", name=".claude/settings.json", body="""{
+    13: dict(kind="file", name=".claude/settings.json", body="""{
   "hooks": {
     "PreToolUse": [{
       "matcher": "Bash",
@@ -517,7 +493,7 @@ GLOS = {
         ("Hooks", "Scripts que el harness corre antes o después de cada acción para validarla o bloquearla."),
         ("Prompt injection", "Instrucciones escondidas en los datos que el modelo lee, y que termina obedeciendo."),
     ]),
-    8: dict(t="Cómo se le da conocimiento a un modelo", items=[
+    7: dict(t="Cómo se le da conocimiento a un modelo", items=[
         ("Embedding", "Convertir un texto en una lista de números, de forma que textos con significado parecido queden cerca: «reembolso» cerca de «devolución»."),
         ("Base vectorial", "Una base de datos que busca por cercanía entre embeddings: pgvector, OpenSearch, Pinecone."),
         ("Fragmento (chunk)", "Un pedazo de documento, de unos 500 tokens, que se indexa por separado."),
@@ -529,7 +505,7 @@ GLOS = {
         ("Búsqueda agéntica", "El agente decide qué buscar, busca varias veces y refina, en vez de hacer una sola búsqueda."),
         ("Evals", "Preguntas con respuesta conocida que se corren en cada cambio, como una suite de tests."),
     ]),
-    9: dict(t="Modelos: tamaños, costos y dónde corren", items=[
+    8: dict(t="Modelos: tamaños, costos y dónde corren", items=[
         ("Modelo frontier", "Los más capaces y caros, ofrecidos por API: Claude Opus o GPT."),
         ("Parámetros (7B, 70B)", "El tamaño del modelo. Más parámetros: más capacidad, más memoria y más costo."),
         ("SLM", "Un modelo pequeño, de 1 a 8B, que corre barato, incluso en una laptop."),
@@ -545,7 +521,7 @@ GLOS = {
     ]),
 }
 
-# Riel superior: extras de cada paso (preguntas frecuentes; el paso 5 trae además contenido completo).
+# Riel superior: extras de cada paso (preguntas frecuentes; el paso 4 trae además contenido completo).
 SUPA = {
     1: dict(faq=[("¿Por qué no reconstruir en cada ambiente?", "Porque lo que llega a producción no sería lo que se probó en QA: basta otra versión de una dependencia para cambiar el resultado. Construye una vez, guarda el artefacto (la imagen con su digest, el paquete con su versión) y promuévelo entre ambientes. Lo único que cambia es la configuración, que se inyecta al desplegar."),
                  ("¿Dónde viven las aprobaciones?", "En el ambiente de la plataforma (Environments de GitHub o Azure DevOps), no en el YAML: así nadie las quita con un PR. Ahí defines quién aprueba, desde qué ramas se puede desplegar y cuánto esperar; el pipeline solo declara a qué ambiente va."),
@@ -553,13 +529,10 @@ SUPA = {
     2: dict(faq=[("¿La cuenta empresarial usa mis datos para entrenar?", "En los planes empresariales y la API de los principales proveedores, por defecto no. Revisa los términos del tuyo antes de firmar. Busca tres cosas: si entrenan con tus datos, cuántos días guardan los prompts y si puedes pedir retención cero."),
                  ("¿No es más seguro prohibir la IA?", "No: la gente la usa igual con cuentas personales y nadie sabe qué datos salen. Una cuenta empresarial es más segura. Con ella tienes inicio de sesión único, quitas el acceso cuando alguien se va y ves quién la usa y para qué."),
                  ("¿El código generado necesita otra revisión?", "La misma que cualquier código: PR, tests y escaneo. Lo que cambia es el volumen: llegan más PRs y más grandes. Pide PRs chicos y que el autor explique el cambio con sus palabras; si no puede, no lo entendió.")]),
-    3: dict(faq=[("¿Qué va en el CLAUDE.md?", "Cómo instalar, validar y probar, las convenciones y lo que no se toca. Lo que un ingeniero nuevo necesitaría el primer día, en pocas líneas. Cuando el agente repite un error, agrega una línea que lo evite; cuando una línea ya no aplica, bórrala. Se revisa en PR como el código."),
-                 ("¿Cuántos agentes en paralelo?", "Tantos cambios independientes como puedas revisar. El límite es la revisión, no los agentes. Usa un worktree por agente para que no se pisen los archivos, y empieza con dos o tres: si los PRs se acumulan sin revisar, son demasiados."),
+    3: dict(faq=[("¿Qué va en el CLAUDE.md?", "Cómo instalar, validar y probar, las convenciones y lo que no se toca. Lo que un ingeniero nuevo necesitaría el primer día, en pocas líneas. Para la revisión, qué comentar y qué no: solo comentarios con evidencia (la línea, por qué falla, cómo arreglarlo) y lo menor agrupado en uno. Cuando el agente repite un error, agrega una línea que lo evite; cuando una línea ya no aplica, bórrala. Se revisa en PR como el código."),
+                 ("¿Reemplaza al revisor humano?", "No. Hace la primera pasada (bugs, secretos, tests que faltan) y la persona revisa diseño y riesgo. Así la revisión humana empieza con lo mecánico resuelto y se enfoca en si el cambio es el correcto. Y nunca aprueba: su token solo comenta."),
                  ("¿Y si el agente se equivoca?", "Para eso están los límites: abre PRs pero no mergea, valida antes de proponer y CI corre igual. El peor caso es un PR que cierras. Si se equivoca dos veces en lo mismo, le falta contexto: va al CLAUDE.md o a un test.")]),
-    4: dict(faq=[("¿Reemplaza al revisor humano?", "No. Hace la primera pasada (bugs, secretos, tests que faltan) y la persona revisa diseño y riesgo. Así la revisión humana empieza con lo mecánico resuelto y se enfoca en si el cambio es el correcto."),
-                 ("¿Cómo bajo el ruido de los comentarios?", "Escribe en el CLAUDE.md qué comentar y qué no, y mide qué comentarios termina aceptando el equipo. Pide solo comentarios con evidencia (la línea, por qué falla, cómo arreglarlo) y que agrupe lo menor en uno solo. Si aceptan menos de la mitad, ajusta las reglas."),
-                 ("¿Puede aprobar el PR?", "Nunca: un PR puede traer instrucciones escondidas para engañar al revisor. Por eso el token del revisor solo puede comentar, y la regla de la rama exige la aprobación de una persona.")]),
-    5: dict(t="Calidad aumentada por IA",
+    4: dict(t="Calidad aumentada por IA",
             lead="QA no desaparece: deja de ejecutar pruebas a mano y pasa a definir qué es calidad. Los agentes escriben, corren y mantienen las pruebas, recorren la aplicación como un usuario y convierten cada bug en un test.",
             ve="QA escribe:  «con tarjeta vencida no se puede pagar»\nel agente:   genera el test e2e y lo corre en pr-482\nsi falla:    propone el fix; el test queda en la suite\ncada bug:    se vuelve un test antes de cerrarse",
             ex=dict(kind="file", name="tests/checkout.spec.ts", body="""test('rechaza una tarjeta vencida', async ({ page }) => {
@@ -576,28 +549,28 @@ SUPA = {
             hitos=[("2017", "Puppeteer"), ("ene 2020", "Playwright"), ("mar 2025", "Playwright MCP: un agente maneja el navegador"), ("2025", "Agentes que escriben, corren y reparan pruebas")],
             faq=[("¿Quién decide qué se prueba?", "QA: escribe los criterios y revisa la suite. El agente ejecuta; no decide qué es calidad. Si el agente propone cambiar un criterio para que un test pase, eso lo aprueba QA."),
                  ("¿Y los tests que se rompen cuando cambia la interfaz?", "Selectores por rol y texto visible, y el agente propone el arreglo en un PR que QA revisa. Si un test falla a veces sí y a veces no, se aísla y se arregla; no se reintenta hasta que pase.")]),
-    6: dict(faq=[("¿Por qué solo lectura?", "Si el agente se equivoca leyendo, pierdes minutos. Si se equivoca actuando, tienes otro incidente. Con solo lectura puede consultar métricas, logs y el historial de deploys, y proponer qué hacer; la acción la ejecuta una persona."),
+    5: dict(faq=[("¿Por qué solo lectura?", "Si el agente se equivoca leyendo, pierdes minutos. Si se equivoca actuando, tienes otro incidente. Con solo lectura puede consultar métricas, logs y el historial de deploys, y proponer qué hacer; la acción la ejecuta una persona."),
                  ("¿Cuándo lo dejo hacer rollback solo?", "Cuando sus análisis llevan meses acertando y el rollback es seguro y reversible. Empieza en QA. Mide cuántas veces su diagnóstico coincidió con lo que hizo la persona de guardia. Cuando lo dejes actuar, que elija de una lista cerrada de acciones y que avise."),
                  ("¿Qué necesita para analizar bien?", "Deployment markers, logs estructurados y runbooks escritos. Sin eso adivina igual que una persona. Si los logs no dicen qué request falló ni qué versión corría, el agente tampoco lo va a saber.")]),
-    7: dict(faq=[("¿Producto puede mergear?", "No: producto valida en el preview, e ingeniería revisa y aprueba el PR. El flujo: producto pide en el ticket, el agente abre el PR con un preview, producto lo prueba y comenta, e ingeniería aprueba lo que llega a producción."),
+    6: dict(faq=[("¿Producto puede mergear?", "No: producto valida en el preview, e ingeniería revisa y aprueba el PR. El flujo: producto pide en el ticket, el agente abre el PR con un preview, producto lo prueba y comenta, e ingeniería aprueba lo que llega a producción."),
                  ("¿Qué pasa con un pedido ambiguo?", "El agente pregunta antes de escribir código; si sigue ambiguo, escala a ingeniería. Ayuda una plantilla de ticket con el resultado esperado y cómo se verifica: el agente pide lo que falte."),
                  ("¿Cómo sabe el agente cómo funciona el negocio?", "Con contexto: documentación, tickets anteriores y decisiones. Empieza por lo que ya está escrito, como el README, los ADRs y los tickets cerrados. Darle ese contexto ordenado es el siguiente paso.")]),
-    8: dict(faq=[("¿RAG o fine-tuning?", "RAG para conocimiento que cambia; fine-tuning para formato y estilo. Si la respuesta depende de un documento que se actualiza la semana que viene, RAG. Si quieres que siempre responda con cierta estructura o tono, fine-tuning. Muchas veces un buen prompt con ejemplos resuelve lo segundo."),
+    7: dict(faq=[("¿RAG o fine-tuning?", "RAG para conocimiento que cambia; fine-tuning para formato y estilo. Si la respuesta depende de un documento que se actualiza la semana que viene, RAG. Si quieres que siempre responda con cierta estructura o tono, fine-tuning. Muchas veces un buen prompt con ejemplos resuelve lo segundo."),
                  ("¿Necesito una base vectorial nueva?", "No para empezar: pgvector sobre el Postgres que ya usas es suficiente. Funciona bien con cientos de miles de fragmentos, y te ahorras otro sistema que operar, respaldar y asegurar. Cambia cuando lo midas lento, no antes."),
                  ("¿Cuándo uso GraphRAG o KAG?", "Cuando las preguntas son sobre relaciones entre muchas cosas y el RAG simple no encuentra la respuesta. Por ejemplo: «¿qué servicios dependen de esta librería y quién es su dueño?». Construir el grafo cuesta, así que primero mejora la búsqueda (híbrida, con reranking) y mide.")]),
-    9: dict(faq=[("¿Cómo sé qué modelo es suficiente?", "Con evals por tarea: corre las mismas preguntas con el modelo chico y el grande y compara. Si el chico acierta igual en esa tarea, usa el chico: es más rápido y cuesta menos. Repite la comparación cuando cambies de modelo o de prompt."),
+    8: dict(faq=[("¿Cómo sé qué modelo es suficiente?", "Con evals por tarea: corre las mismas preguntas con el modelo chico y el grande y compara. Si el chico acierta igual en esa tarea, usa el chico: es más rápido y cuesta menos. Repite la comparación cuando cambies de modelo o de prompt."),
                  ("¿Cuándo conviene el prompt caching?", "Cuando cada llamada repite un contexto grande, como las reglas o la documentación. Leer desde caché cuesta una fracción del precio normal. Pon el contexto fijo al principio del prompt y lo que cambia al final, para que el prefijo se reutilice."),
                  ("¿El gateway agrega latencia?", "Poca, y a cambio tienes presupuesto, registro y un punto de control. Suelen ser milisegundos frente a los segundos que tarda el modelo. Ponlo en la misma región que tus servicios y mídelo.")]),
-    10: dict(faq=[("¿Cuándo no usar un modelo pequeño?", "En tareas abiertas o que exigen razonar mucho, como planear un cambio en varios archivos o responder preguntas abiertas de clientes. Funciona bien para clasificar, extraer campos o resumir con un formato fijo."),
+    9: dict(faq=[("¿Cuándo no usar un modelo pequeño?", "En tareas abiertas o que exigen razonar mucho, como planear un cambio en varios archivos o responder preguntas abiertas de clientes. Funciona bien para clasificar, extraer campos o resumir con un formato fijo."),
                   ("¿Dónde corre?", "En una GPU pequeña, en CPU o en una laptop. Uno de 1B a 4B parámetros cuantizado cabe en pocos GB de memoria; con Ollama o llama.cpp lo pruebas en minutos."),
                   ("¿Qué tan bueno es?", "En tareas acotadas puede igualar al grande. Mídelo con tus evals antes de cambiar: arma un set de 50 a 100 casos reales, córrelo con el modelo actual y con el pequeño, y cambia solo si la diferencia es aceptable para esa tarea.")]),
-    11: dict(faq=[("¿Cuántos ejemplos necesito?", "Para formato y estilo, cientos o pocos miles bien curados suelen bastar. Importa más la calidad que la cantidad: ejemplos revisados, sin contradicciones y parecidos a lo que verá en producción. Separa una parte para evaluar y no entrenes con ella."),
+    10: dict(faq=[("¿Cuántos ejemplos necesito?", "Para formato y estilo, cientos o pocos miles bien curados suelen bastar. Importa más la calidad que la cantidad: ejemplos revisados, sin contradicciones y parecidos a lo que verá en producción. Separa una parte para evaluar y no entrenes con ella."),
                   ("¿Qué pasa si cambia el modelo base?", "El adapter queda atado a esa versión: hay que reentrenarlo. Guarda el dataset, la configuración y las evals junto al adapter para repetir el entrenamiento con la versión nueva y comparar."),
                   ("¿Y si un ejemplo tenía datos personales?", "No se puede borrar del adapter: hay que reentrenar sin ese dato. Por eso los datos se limpian antes de entrenar: enmascara nombres, documentos y cuentas, y registra de dónde salió cada ejemplo.")]),
-    12: dict(faq=[("¿Cuándo conviene hostear modelos?", "Con volumen alto y constante, o cuando los datos no pueden salir de tu red. Haz la cuenta completa: GPUs encendidas todo el día, personas que las operan y modelos que actualizar, contra el costo por token de la API."),
+    11: dict(faq=[("¿Cuándo conviene hostear modelos?", "Con volumen alto y constante, o cuando los datos no pueden salir de tu red. Haz la cuenta completa: GPUs encendidas todo el día, personas que las operan y modelos que actualizar, contra el costo por token de la API."),
                   ("¿Qué GPU necesito?", "Depende del modelo: uno de 8B cuantizado cabe con holgura en una GPU de 24 GB. Suma memoria para el contexto: con muchas peticiones en paralelo o contextos largos, la caché de atención (KV cache) puede pedir tanto como el modelo."),
                   ("¿Quién lo opera?", "Alguien de guardia por el servidor de modelos, como por cualquier otro servicio. Necesita métricas (latencia, cola, memoria de GPU), alertas, un runbook y un plan para actualizar el modelo sin cortar el servicio.")]),
-    13: dict(faq=[("¿Es tan bueno como un modelo en la nube?", "No para todo: sirve para tareas acotadas o sensibles. Un modelo local de pocos miles de millones de parámetros resume, clasifica y autocompleta bien; para razonar sobre un sistema grande, el modelo en la nube sigue ganando."),
+    12: dict(faq=[("¿Es tan bueno como un modelo en la nube?", "No para todo: sirve para tareas acotadas o sensibles. Un modelo local de pocos miles de millones de parámetros resume, clasifica y autocompleta bien; para razonar sobre un sistema grande, el modelo en la nube sigue ganando."),
                   ("¿Cómo controlo qué modelos usa la gente?", "Con un catálogo de modelos aprobados y verificados. Publícalos en un registro interno con su hash y su licencia, y bloquea en la red la descarga directa desde repos públicos."),
                   ("¿Funciona sin internet?", "Sí: una vez descargado, el modelo corre sin red. Sirve en redes aisladas o con datos que no pueden salir del equipo. Las actualizaciones del modelo se distribuyen como cualquier otro software.")]),
 }
@@ -620,19 +593,19 @@ SUPS = {
     3: [("¿Cuál es el modo de permisos más seguro?", "Pedir confirmación antes de cada acción que escribe, y permitir sin preguntar solo lo de lectura y los comandos de validación. En Claude Code eso se escribe como reglas allow, ask y deny en .claude/settings.json, que se versiona con el repo."),
         ("¿Qué es un sandbox?", "Un entorno aislado: sin credenciales de producción y con la red limitada. Puede ser un contenedor o un devcontainer, con solo el repo montado y la salida a internet limitada a una lista de dominios. Si algo sale mal, lo borras y lo vuelves a crear."),
         ("¿Los hooks reemplazan los permisos?", "No: los complementan con reglas propias, como bloquear rm -rf o la lectura de .env. Un hook es un script que corre antes o después de cada herramienta y puede bloquearla; sirve para reglas que no caben en una lista de comandos.")],
-    6: [("¿Qué guardo en la traza?", "El prompt, cada tool call con sus argumentos, los resultados, el modelo, el costo y quién la disparó. Con eso reconstruyes qué hizo el agente paso a paso, aunque haya pasado hace una semana. Usa un id de traza que viaje con el request para unirla con tus logs."),
+    5: [("¿Qué guardo en la traza?", "El prompt, cada tool call con sus argumentos, los resultados, el modelo, el costo y quién la disparó. Con eso reconstruyes qué hizo el agente paso a paso, aunque haya pasado hace una semana. Usa un id de traza que viaje con el request para unirla con tus logs."),
         ("¿Y los datos personales en las trazas?", "Enmascáralos antes de guardar y define cuánto tiempo se retienen. Hazlo en el SDK o en un collector, antes de que salgan del servicio, y limita quién puede ver las trazas completas."),
         ("¿Langfuse o LangSmith?", "Langfuse es open source y se puede hostear; LangSmith es del equipo de LangChain. Los dos sirven. Si ya usas OpenTelemetry, revisa que acepte esas trazas para no mantener dos instrumentaciones.")],
-    7: [("¿Por qué no usar mi cuenta para el agente?", "Porque el agente tendría todos tus permisos y no se distinguiría qué hizo él y qué hiciste tú. Con una cuenta de servicio propia le das solo los permisos de su tarea, la revocas sin afectarte y la auditoría muestra qué hizo el agente."),
+    6: [("¿Por qué no usar mi cuenta para el agente?", "Porque el agente tendría todos tus permisos y no se distinguiría qué hizo él y qué hiciste tú. Con una cuenta de servicio propia le das solo los permisos de su tarea, la revocas sin afectarte y la auditoría muestra qué hizo el agente."),
         ("¿Cómo reviso un servidor MCP?", "Lee qué herramientas expone, fija la versión y prefiere los servidores oficiales. Revisa qué credenciales pide y a qué dominios se conecta, y córrelo con el mínimo de permisos. Una versión nueva se revisa igual que la primera."),
         ("¿Qué es el tool poisoning?", "Instrucciones escondidas en la descripción de una herramienta MCP, que el agente lee y obedece. El usuario no ve esa descripción, pero el modelo sí. Por eso se revisan las descripciones al aprobar un servidor y se fija la versión, para que no cambien después.")],
-    8: [("¿Puedo filtrar los permisos después de buscar?", "Es más seguro filtrar en la consulta: lo que no se recupera no se puede filtrar al modelo. Si filtras después, el documento ya pasó por tu sistema y un error en ese filtro lo expone. Guarda los permisos en cada fragmento y úsalos como condición de la búsqueda."),
+    7: [("¿Puedo filtrar los permisos después de buscar?", "Es más seguro filtrar en la consulta: lo que no se recupera no se puede filtrar al modelo. Si filtras después, el documento ya pasó por tu sistema y un error en ese filtro lo expone. Guarda los permisos en cada fragmento y úsalos como condición de la búsqueda."),
         ("¿Y si un documento trae instrucciones?", "Se trata como datos: nunca da permisos nuevos ni cambia las reglas del agente. Márcalo en el prompt como contenido citado, y si el agente puede actuar, que las acciones dependan del pedido del usuario, no de lo que dice el documento."),
         ("¿Cómo mantengo los permisos al día?", "Sincronizándolos desde la fuente en cada ingesta. Cuando alguien pierde acceso a un documento en la fuente, tiene que perderlo también en el índice; mide cuánto tarda ese cambio en llegar.")],
-    9: [("¿Qué gateway uso?", "LiteLLM si quieres open source; Portkey o Kong si prefieres algo administrado. Lo importante es que todos los equipos pasen por el mismo: elige uno que puedas operar y que soporte tus proveedores."),
+    8: [("¿Qué gateway uso?", "LiteLLM si quieres open source; Portkey o Kong si prefieres algo administrado. Lo importante es que todos los equipos pasen por el mismo: elige uno que puedas operar y que soporte tus proveedores."),
         ("¿Qué registro en el gateway?", "Quién llamó, qué modelo, tokens y costo, y el contenido con los datos personales enmascarados. Con eso cobras el costo a cada equipo, detectas abusos y respondes qué datos se enviaron a qué proveedor."),
         ("¿Cómo evito que alguien lo salte?", "Las claves de los proveedores solo las tiene el gateway. Los equipos reciben claves del gateway, y la red bloquea la salida directa a las APIs de los proveedores.")],
-    12: [("¿Bedrock o vLLM?", "Bedrock si quieres modelos administrados dentro de tu cuenta; vLLM si quieres servir modelos abiertos propios. Bedrock te quita operar GPUs pero limita qué modelos hay; vLLM te deja elegir cualquiera a cambio de operarlo."),
+    11: [("¿Bedrock o vLLM?", "Bedrock si quieres modelos administrados dentro de tu cuenta; vLLM si quieres servir modelos abiertos propios. Bedrock te quita operar GPUs pero limita qué modelos hay; vLLM te deja elegir cualquiera a cambio de operarlo."),
          ("¿Cómo verifico un modelo descargado?", "Solo safetensors, hash fijo y un escaneo antes de usarlo. safetensors no ejecuta código al cargar, a diferencia de pickle. Anota el hash en tu catálogo y compáralo en cada despliegue."),
          ("¿Qué licencias reviso?", "Que permitan uso comercial. Llama, Qwen y Gemma lo permiten, cada una con sus condiciones. Revisa límites de usuarios, usos prohibidos y si exigen mencionar el modelo; algunas variantes tienen una licencia distinta a la de su familia.")],
 }
